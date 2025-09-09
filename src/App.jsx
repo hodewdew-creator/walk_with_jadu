@@ -240,12 +240,6 @@ export default function WalkTrackerApp() {
       </div>
       {/* 하단 고정: 쿠팡 파트너스 배너 (320x60 비율) */}
       <CoupangAd />
-      <p style="font-size: 11px; color: #999; line-height: 1.4; text-align: center; margin: 10px;">
-  * 본 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.  
-  쿠팡 링크: <a href="https://link.coupang.com/a/AF3609977" target="_blank" style="color:#999; text-decoration:underline;">
-    👉 쿠팡에서 확인하기
-  </a>
-</p>
     </div>
   );
 }

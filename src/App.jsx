@@ -267,9 +267,6 @@ export default function WalkTrackerApp() {
         </section>
       </div>
 
-      {/* 하단 고정: 쿠팡 파트너스 배너 + 고지문 */}
-      <CoupangAd ref={footerRef} />
-    </div>
   );
 }
 

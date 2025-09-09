@@ -12,12 +12,12 @@ const fmt = (d) => {
 
 const STORE_KEY = "walklog-v9"; // 그대로 유지 (기존 로컬 데이터 보존)
 
-// (추후 교체) 초복이 사진 세트 매핑 (빈 문자열은 SVG 강아지로 대체 렌더)
+// (추후 교체) 초복이 사진 세트 매핑
 const dogImages = {
-  verylow: "",
-  low: "",
-  mid: "",
-  high: "",
+  verylow: "/dog-temp.png", 
+  low: "/dog-temp.png",
+  mid: "/dog-temp.png",
+  high: "/dog-temp.png",
 };
 
 export default function WalkTrackerApp() {

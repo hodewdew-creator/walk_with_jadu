@@ -26,6 +26,18 @@ export default function WalkTrackerApp() {
   const [data, setData] = useState({});
   const [themeColor, setThemeColor] = useState("#38bdf8");
 
+  // 하단 고정 광고 높이 측정 → 본문 패딩 보정(세로 스크롤 방지)
+  const footerRef = useRef(null);
+  const [footerH, setFooterH] = useState(100);
+  useEffect(() => {
+    const measure = () => setFooterH(footerRef.current?.offsetHeight || 100);
+    measure();
+    const onR = () => measure();
+    window.addEventListener("resize", onR);
+    const id = setInterval(measure, 500);
+    return () => { window.removeEventListener("resize", onR); clearInterval(id); };
+  }, []);
+
   // 테스트 입력 패널
   const [editOpen, setEditOpen] = useState(false);
   const [tmpDate, setTmpDate] = useState("");
@@ -255,6 +267,9 @@ export default function WalkTrackerApp() {
         </section>
       </div>
 
+      {/* 하단 고정: 쿠팡 파트너스 배너 + 고지문 */}
+      <CoupangAd ref={footerRef} />
+    </div>
   );
 }
 
@@ -421,4 +436,24 @@ function Legend({ themeColor }){
   );
 }
 
+const CoupangAd = forwardRef(function CoupangAd(_, ref){
+  return (
+    <div ref={ref} className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 border-t border-slate-200">
+      {/* 광고 프레임 (320x60 비율) */}
+      <div style={{ position:'relative', width:'100%', paddingTop:'18.75%' }}>
+        <iframe
+          src="https://ads-partners.coupang.com/widgets.html?id=915461&template=carousel&trackingCode=AF3609977&subId=&width=600&height=100&tsource="
+          style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0 }}
+          scrolling="no"
+          referrerPolicy="unsafe-url"
+          title="쿠팡 파트너스 광고"
+        />
+      </div>
+      {/* 고지문 */}
+      <div className="px-3 pt-1 pb-2 text-[10px] leading-tight text-slate-500 text-center">
+        * 본 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+        <a href="https://link.coupang.com/a/AF3609977" target="_blank" rel="noopener noreferrer nofollow ugc" className="underline ml-1">쿠팡 링크</a>
+      </div>
+    </div>
+  );
 });

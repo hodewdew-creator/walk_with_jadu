@@ -439,7 +439,9 @@ function Legend({ themeColor }){
 const CoupangAd = forwardRef(function CoupangAd(_, ref){
   return (
     <div ref={ref} className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 border-t border-slate-200">
+      {/* 광고 프레임 (320x60 비율) */}
 
+      
     </div>
   );
 });

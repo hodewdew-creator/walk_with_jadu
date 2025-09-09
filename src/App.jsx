@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, forwardRef } from "react";
 
-/** 파일: src/App.jsx — 오늘 걸음 원 + 월간 3~4층 블럭(31일은 4층, 21 위) + 테스트 입력 + 광고 */
+/** 파일: src/App.jsx — 오늘 걸음 원 + 월간 3~4층 블럭(31일은 4층, 21 위) + 테스트 입력 + 광고 + 고지문 */
 
 // 로컬 날짜 키(UTC 오프셋 이슈 방지)
 const fmt = (d) => {
@@ -10,14 +10,14 @@ const fmt = (d) => {
   return `${y}-${m}-${day}`;
 };
 
-const STORE_KEY = "walklog-v9"; // v8→v9
+const STORE_KEY = "walklog-v9"; // 그대로 유지 (기존 로컬 데이터 보존)
 
-// (추후 교체) 초복이 사진 세트 매핑 (빈 문자열은 이모지로 대체 렌더)
+// (추후 교체) 초복이 사진 세트 매핑 (빈 문자열은 SVG 강아지로 대체 렌더)
 const dogImages = {
-  verylow: "", // 0~2000 또는 제외
-  low: "",     // 2001~6000
-  mid: "",     // 6001~10000
-  high: "",    // 10000+
+  verylow: "",
+  low: "",
+  mid: "",
+  high: "",
 };
 
 export default function WalkTrackerApp() {
@@ -25,6 +25,18 @@ export default function WalkTrackerApp() {
   const [viewDate, setViewDate] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [data, setData] = useState({});
   const [themeColor, setThemeColor] = useState("#38bdf8");
+
+  // 하단 고정 광고 높이 측정 → 본문 패딩 보정(세로 스크롤 방지)
+  const footerRef = useRef(null);
+  const [footerH, setFooterH] = useState(100);
+  useEffect(() => {
+    const measure = () => setFooterH(footerRef.current?.offsetHeight || 100);
+    measure();
+    const onR = () => measure();
+    window.addEventListener("resize", onR);
+    const id = setInterval(measure, 500);
+    return () => { window.removeEventListener("resize", onR); clearInterval(id); };
+  }, []);
 
   // 테스트 입력 패널
   const [editOpen, setEditOpen] = useState(false);
@@ -35,15 +47,30 @@ export default function WalkTrackerApp() {
   // 멘트 100개 + 1분마다 갱신(ON)
   const autoRotateMsg = true;
   const messages = [
-    "오늘도 힘차게 걸어봐요! 🐶","초복이가 기다려요 💕","엄마 최고예요!","비 와도 마음은 맑음 ☔","작은 걸음이 큰 건강!","한 블럭 채워볼까요?","걷다 보면 기분 좋아져요","초복이 응원 중 🐾","바람 쐬러 가요 🌿","천천히 꾸준히 ✨","8천 보 도전!","발자국 도장 찍기!","구름도 산책 중 ☁️","작심삼일? 우린 작심매일!","햇살 맛집으로 ☀️","오늘 길은 어디로?","발걸음만큼 가벼운 마음","산책은 최고의 취미","작은 산책, 큰 행복","초복이랑 같이 가요","오늘도 건강 루틴","발끝부터 건강하게","한 바퀴만 돌아볼까요","마음도 스트레칭","물 많이 마시기 💧","하늘이 예쁜 날","발걸음에 박수 짝짝","걷기 명상 타임","공원까지 슝~","오늘도 완주!","숨이 탁 트여요","길냥이에게 인사","바람이 상쾌해요","발자국 톡톡","초복이 산책 레디!","한 걸음 더!","오늘도 나이스 페이스","리듬 타고 걷기","좋아하는 노래와 함께","꽃 냄새 맡아요 🌸","새소리 들려요?","발목 스트레칭 잊지말기","수고했어요 나 자신","어제보다 한 걸음","비 오면 우산 산책 ☔","시장 구경 산책","계단은 천천히","10분만 걸어도 좋아","관절이 좋아해요","목표는 도장 하나!","딱 5분만 나갔다 오자","집앞 한 바퀴 OK","심호흡 한 번","오 솔레 미오~","초복이 눈빛 레이저✨","응원 뿜뿜","비타민 D 충전","밤하늘 별 보기","노을이 예뻐요","비 온 뒤 공기 최고","끈 꽉 묶고 출발!","물병 챙겼나요?","모자 쓰고 나가요 🧢","가볍게 스트레칭","허리 쭉 펴요","힙! 업!","오늘도 칭찬 한 스푼","천천히도 충분해요","기분이 콩닥콩닥","발걸음이 노래해","포근한 바람","초복이의 응원 포효!","도시의 산책자","골목 탐험 가자","새로운 길 발견!","사진도 한 장 찰칵","안전 산책 약속","횡단보도 조심","따뜻한 차 한 잔 ☕","걷고 나면 개운해","오늘도 반짝반짝 ✨","작은 성취 모으기","스니커즈가 미소를","좋아하는 카페까지","햇살 따라 걷기","풀 냄새 맡아요","구름 그림자 밟기","하늘색 예술이네","가로수 하이파이브","오늘은 음악 산책","발끝에 힘!","몸이 가벼워져요","한숨 대신 산책","고양이처럼 유연하게","여유 한 스푼","바닥은 미끄럼 주의","마음에도 산책","창밖 보기 말고 나가요","오늘도 건강 적금","내일의 나에게 선물","초복이가 좋아해요","우리 오늘도 파이팅!"
+    "초복이: 엄마, 산책 가요? 🐶","하늘이 너무 예뻐요 ✨","노을 감상 산책 🌇","한 바퀴만 살짝","바람이 초대했어요 🌿",
+    "발자국 도장 찍기","골목길 작은 모험","구름 그림자 밟기","꽃 향기 맡고 가요 🌸","벤치에서 쉬었다 가요",
+    "좋아하는 노래 ON ▶","카페까지 데이트 ☕","리듬 타는 발걸음","가로수랑 손인사","초복이 눈빛 레이저✨",
+    "팔짝팔짝 신나는 날","작심매일 느낌","작은 설렘 챙기기","구름이 춤춰요 ☁️","마음도 산책 중",
+    "달빛 길 걷기 🌙","길 위의 포근함","살랑살랑 바람소리","천천히도 멋져요","초복이의 응원 포효!",
+    "미소가 따라와요","한숨 대신 산책","좋아하는 길로 GO","풀 향기 한 스푼","쉼표 같은 시간",
+    "오늘도 반짝✨","마음이 가벼워져요","비 개인 하늘 예술","햇살 맛집 코스 ☀️","돌아오면 상쾌해요",
+    "작은 성취 콕콕","박수 짝짝","도시의 산책자","계단은 천천히","시장 골목 산책",
+    "노래 두 곡 거리","동네 길 100점","산책 레디!","미끄럼 주의 ⚠️","호기심 가득 눈빛",
+    "오늘도 기분 촉촉","내일의 나에게 선물","하늘색 예쁘다","새소리 들리나요?","심호흡 한 번",
+    "공원까지 슝~","바람이 상냥해요","숲 향기 하나 더","따뜻한 차 생각 ☕","카메라롤 채우기",
+    "구석구석 탐험","발자국 톡톡톡","포토타임","오늘도 무드 좋다","웃음도 같이 걷기",
+    "구름 예보: 귀여움","행복이 졸졸","조용조용 힐링","노을에 마음 녹음","꼬리 살랑",
+    "하루의 마침표 ·","비 오는 날 감성","우산 톡톡 리듬","딱 5분도 좋아","집앞 한 바퀴 OK",
+    "숨은 포토존 찾기","발걸음이 노래해","빨리빨리!","뿌듯함 챙겨오기","새길 발견 코너",
+    "햇살에 반짝이는 길","발끝까지 행복","달님께 살짝 인사","별들에게 손인사","낮잠 대신 산책",
+    "칭찬 한 스푼","반짝이 길 위로","작은 설렘 두 스푼","골목 끝 비밀 정원?","오늘도 우리만의 길",
+    "나란히 나란히","포근한 공기 한 컵","고양이랑 인사","창문 밖 말고 밖으로","바삭한 공기 맛",
   ];
   const [msgIndex, setMsgIndex] = useState(() => Math.floor(Math.random()*messages.length));
   const msgTimer = useRef(null);
   useEffect(()=>{
     if(!autoRotateMsg) return;
-    msgTimer.current = setInterval(()=>{
-      setMsgIndex((i)=> (i+1)%messages.length);
-    }, 60_000);
+    msgTimer.current = setInterval(()=>{ setMsgIndex((i)=> (i+1)%messages.length); }, 60_000);
     return ()=> { if(msgTimer.current) clearInterval(msgTimer.current); };
   },[autoRotateMsg]);
 
@@ -88,7 +115,7 @@ export default function WalkTrackerApp() {
     });
   }
 
-  // 제외 토글(달성 상태에선 동작 금지)
+  // 제외 토글(달성 상태에선 동작 금지) → 블랙 X 아이콘
   function toggleExcludedSafe(key) {
     setData((p) => {
       const it = p[key] || {};
@@ -127,14 +154,14 @@ export default function WalkTrackerApp() {
 
   // 3층(1~30) + 4층(31) 구성
   const rows = [
-    Array.from({ length: 10 }, (_, i) => i + 1),   // row1 (1~10)
-    Array.from({ length: 10 }, (_, i) => i + 11),  // row2 (11~20)
-    Array.from({ length: 10 }, (_, i) => i + 21),  // row3 (21~30)
+    Array.from({ length: 10 }, (_, i) => i + 1),   // 1~10
+    Array.from({ length: 10 }, (_, i) => i + 11),  // 11~20
+    Array.from({ length: 10 }, (_, i) => i + 21),  // 21~30
   ];
 
   return (
     <div className="min-h-screen" style={{ background: themeColor + "10" }}>
-      <div className="max-w-sm mx-auto p-5 pb-28 flex flex-col items-center relative">
+      <div className="max-w-sm mx-auto p-5 flex flex-col items-center relative" style={{ paddingBottom: (footerH + 10) + 'px' }}>
         {/* 팔레트 버튼 */}
         <label className="absolute top-3 right-3 cursor-pointer" title="테마 색 변경">
           🎨
@@ -147,14 +174,15 @@ export default function WalkTrackerApp() {
             {dogImages[photoGroup] ? (
               <img src={dogImages[photoGroup]} alt="초복이" className="w-full h-full object-cover" />
             ) : (
-              <span>{photoGroup==='verylow' ? '😴' : photoGroup==='low' ? '🙂' : photoGroup==='mid' ? '😄' : '🐶🔥'}</span>
+              <DogFallbackIcon />
             )}
           </div>
           <div className="text-slate-700 font-semibold text-center">{messages[msgIndex]}</div>
         </div>
 
         {/* 메인 원 */}
-        <div className="relative w-64 h-64 rounded-full bg-white shadow-md flex flex-col items-center justify-center mb-3" style={{ border:`6px solid ${themeColor}` }}>
+        <div className="relative rounded-full bg-white shadow-md flex flex-col items-center justify-center mb-3"
+             style={{ width: "clamp(200px, 56vw, 256px)", height: "clamp(200px, 56vw, 256px)", border: `6px solid ${themeColor}` }}>
           {/* ✏️ 테스트 입력 버튼 */}
           <button onClick={openEditor} className="absolute top-2 right-2 text-[11px] px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200" title="테스트용 수동 입력" aria-label="테스트용 수동 입력">✏️</button>
 
@@ -238,15 +266,15 @@ export default function WalkTrackerApp() {
           <Legend themeColor={themeColor} />
         </section>
       </div>
-      {/* 하단 고정: 쿠팡 파트너스 배너 (320x60 비율) */}
-      <CoupangAd />
+
+      {/* 하단 고정: 쿠팡 파트너스 배너 + 고지문 */}
+      <CoupangAd ref={footerRef} />
     </div>
   );
 }
 
 function BlockCell({ y, m, n, maxDay, data, goal, themeColor, onToggleRainIfGrey, onToggleExcluded }) {
-  // 존재하지 않는 날짜 칸은 생성하지 않음
-  if (n > maxDay) return null;
+  if (n > maxDay) return null; // 존재하지 않는 날짜 칸은 생성하지 않음
   const date = new Date(y, m, n);
   const key = fmt(date);
   const item = data[key] || {};
@@ -255,19 +283,13 @@ function BlockCell({ y, m, n, maxDay, data, goal, themeColor, onToggleRainIfGrey
   const achieved = !item.excluded && (item.steps || 0) >= goal;
   const isDouble = !item.excluded && (item.steps || 0) >= goal * 2;
   const isGrey = !item.excluded && (item.steps || 0) < goal;
-  const pawSize = isDouble ? 22 : 18;
+  const iconSize = isDouble ? 26 : 22; // 발바닥 기본 크게, 2배는 더 크게
 
   // 제스처: 달성일은 임의 변경 불가
-  const longRef = useRef(false);
   const timerRef = useRef(null);
-  const down = () => {
-    if (achieved) return;
-    longRef.current = false;
-    timerRef.current = setTimeout(() => { longRef.current = true; onToggleExcluded(key); }, 500);
-  };
-  const up = () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  const click = () => {};
-  const dbl = () => { if (isGrey) onToggleRainIfGrey(key); };
+  const down = () => { if (achieved) return; timerRef.current = setTimeout(() => onToggleExcluded(key), 500); };
+  const up   = () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  const dbl  = () => { if (isGrey) onToggleRainIfGrey(key); };
 
   const label = `${key} · ${item.excluded ? '제외' : (isDouble ? '2배 달성' : (achieved ? '달성' : '미달'))}${(isGrey && item.rain) ? ' · 비' : ''}`;
 
@@ -276,42 +298,39 @@ function BlockCell({ y, m, n, maxDay, data, goal, themeColor, onToggleRainIfGrey
       onPointerDown={down}
       onPointerUp={up}
       onPointerLeave={up}
-      onClick={click}
       onDoubleClick={dbl}
       className="relative h-8 rounded flex items-center justify-center text-[12px] select-none"
       style={{ backgroundColor: color, color: "white" }}
       title={label}
       aria-label={label}
     >
-      {achieved ? (
-        <PawIcon color="#ffffff" size={pawSize} />
+      {item.excluded ? (
+        <ExcludeIcon size={iconSize} />
+      ) : achieved ? (
+        <PawIcon size={iconSize} />
       ) : isGrey && item.rain ? (
-        <RainCancelIcon size={pawSize} />
+        <RainCancelIcon size={iconSize} />
       ) : (
         n
       )}
-      {item.excluded && "🚫"}
     </div>
   );
 }
 
 function Circle31({ y, m, data, goal, themeColor, onToggleRainIfGrey, onToggleExcluded }) {
-  const date = new Date(y, m, 31);
-  const key = fmt(date);
+  const key = fmt(new Date(y, m, 31));
   const item = data[key] || {};
   const color = dayClass(item, goal, themeColor);
 
   const achieved = !item.excluded && (item.steps || 0) >= goal;
   const isDouble = !item.excluded && (item.steps || 0) >= goal * 2;
   const isGrey = !item.excluded && (item.steps || 0) < goal;
-  const pawSize = isDouble ? 22 : 18;
+  const iconSize = isDouble ? 26 : 22;
 
-  const longRef = useRef(false);
   const timerRef = useRef(null);
-  const down = () => { if (achieved) return; longRef.current = false; timerRef.current = setTimeout(() => { longRef.current = true; onToggleExcluded(key); }, 500); };
-  const up = () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  const click = () => {};
-  const dbl = () => { if (isGrey) onToggleRainIfGrey(key); };
+  const down = () => { if (achieved) return; timerRef.current = setTimeout(() => onToggleExcluded(key), 500); };
+  const up   = () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  const dbl  = () => { if (isGrey) onToggleRainIfGrey(key); };
 
   const label = `${key} · ${item.excluded ? '제외' : (isDouble ? '2배 달성' : (achieved ? '달성' : '미달'))}${(isGrey && item.rain) ? ' · 비' : ''}`;
 
@@ -320,26 +339,24 @@ function Circle31({ y, m, data, goal, themeColor, onToggleRainIfGrey, onToggleEx
       onPointerDown={down}
       onPointerUp={up}
       onPointerLeave={up}
-      onClick={click}
       onDoubleClick={dbl}
       className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] select-none mx-auto"
       style={{ backgroundColor: color, color: "white" }}
       title={label}
       aria-label={label}
     >
-      {achieved ? <PawIcon color="#ffffff" size={pawSize} /> : (isGrey && item.rain ? <RainCancelIcon size={pawSize} /> : '31')}
-      {item.excluded && "🚫"}
+      {item.excluded ? <ExcludeIcon size={iconSize} /> : achieved ? <PawIcon size={iconSize} /> : (isGrey && item.rain) ? <RainCancelIcon size={iconSize} /> : '31'}
     </div>
   );
 }
 
 function dayClass(item, goal, themeColor) {
   if (!item) return "#e2e8f0"; // 미입력: 아주 밝은 회색
-  if (item.excluded) return "#fbbf24"; // 제외: 주황
+  if (item.excluded) return "#ffffff"; // 제외: 흰 배경 (검은 X가 중앙)
   const s = item.steps || 0;
   if (s >= goal * 2) return darkenHex(themeColor, 0.7); // 2배: 테마색 진하게
-  if (s >= goal) return themeColor; // 달성: 테마색
-  return "#cbd5e1"; // 미달: 밝은 회색
+  if (s >= goal) return themeColor;                      // 달성: 테마색
+  return "#cbd5e1";                                     // 미달: 밝은 회색
 }
 
 function darkenHex(hex, factor = 0.8) {
@@ -354,25 +371,49 @@ function darkenHex(hex, factor = 0.8) {
   } catch(e){ return hex; }
 }
 
-function PawIcon({ color = "#ffffff", size = 14 }) {
-  const stroke = "#ffffff"; const sw = 1.2;
+// 아이콘들
+function PawIcon({ size = 22 }) {
+  const c = "#ffffff", sw = 1.2;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="7" cy="7" r="3" fill={color} stroke={stroke} strokeWidth={sw} />
-      <circle cx="17" cy="7" r="3" fill={color} stroke={stroke} strokeWidth={sw} />
-      <circle cx="4" cy="12" r="3" fill={color} stroke={stroke} strokeWidth={sw} />
-      <circle cx="20" cy="12" r="3" fill={color} stroke={stroke} strokeWidth={sw} />
-      <path d="M7 18c0-3 3-5 5-5s5 2 5 5c0 2-2 4-5 4s-5-2-5-4z" fill={color} stroke={stroke} strokeWidth={sw} />
+      <circle cx="7" cy="7" r="3" fill={c} stroke={c} strokeWidth={sw} />
+      <circle cx="17" cy="7" r="3" fill={c} stroke={c} strokeWidth={sw} />
+      <circle cx="4" cy="12" r="3" fill={c} stroke={c} strokeWidth={sw} />
+      <circle cx="20" cy="12" r="3" fill={c} stroke={c} strokeWidth={sw} />
+      <path d="M7 18c0-3 3-5 5-5s5 2 5 5c0 2-2 4-5 4s-5-2-5-4z" fill={c} stroke={c} strokeWidth={sw} />
     </svg>
   );
 }
 
-function RainCancelIcon({ size = 18 }) {
-  const blue = "#3b82f6";
+function RainCancelIcon({ size = 22 }) {
+  const blue = "#3b82f6"; // 파란 물방울 + 흰 X
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 2 C9 6,6 9,6 13 a6 6 0 0 0 12 0 c0-4-3-7-6-11z" fill={blue} />
       <path d="M9 13 l6 6 M15 13 l-6 6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function ExcludeIcon({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 6 L18 18 M18 6 L6 18" stroke="#111" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DogFallbackIcon({ size = 64 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="30" fill="#fde68a" />
+      <circle cx="24" cy="28" r="6" fill="#fff"/>
+      <circle cx="40" cy="28" r="6" fill="#fff"/>
+      <circle cx="24" cy="28" r="3" fill="#111"/>
+      <circle cx="40" cy="28" r="3" fill="#111"/>
+      <path d="M24 44 q8 6 16 0" stroke="#111" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <path d="M14 18 q6 -10 14 -2" stroke="#d97706" strokeWidth="6" strokeLinecap="round"/>
+      <path d="M50 18 q-6 -10 -14 -2" stroke="#d97706" strokeWidth="6" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -384,7 +425,7 @@ function Legend({ themeColor }){
       <div className="flex items-center gap-4 text-[11px] text-slate-600">
         <div className="flex items-center gap-2"><div className="w-6 h-4 rounded" style={{ backgroundColor: themeColor }} /><span>달성</span></div>
         <div className="flex items-center gap-2"><div className="w-6 h-4 rounded" style={{ backgroundColor: darkenHex(themeColor,0.7) }} /><span>2배달성</span></div>
-        <div className="flex items-center gap-2"><div className="w-6 h-4 rounded" style={{ backgroundColor: '#fbbf24' }} /><span>제외(길게누르기)</span></div>
+        <div className="flex items-center gap-2"><div className="w-6 h-4 rounded border border-slate-300 bg-white" /><span>제외(길게누르기)</span></div>
       </div>
       {/* 비 설명 */}
       <div className="mt-1 flex items-center gap-1 justify-end text-[11px] text-slate-500">
@@ -395,27 +436,24 @@ function Legend({ themeColor }){
   );
 }
 
-function CoupangAd(){
+const CoupangAd = forwardRef(function CoupangAd(_, ref){
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 border-t border-slate-200">
-    <div style={{ display:'flex', alignItems:'center', gap:'12px', margin:'16px 0' }}>
-  <div style={{ flex:'0 0 auto', width:'160px', aspectRatio:'320 / 75' }}>
-    <iframe
-      src="https://coupa.ng/cjPNMq"
-      style={{ width:'100%', height:'100%', border:0 }}
-      frameBorder="0"
-      scrolling="no"
-      referrerPolicy="unsafe-url"
-      title="쿠팡 파트너스 광고"
-    />
-  </div>
-
-  <p style={{ fontSize:'11px', color:'#999', lineHeight:1.4, margin:0 }}>
-    ※ 본 배너는 쿠팡 파트너스 광고이며,<br />
-    구매 시 일정액의 수수료를 받을 수 있습니다.
-  </p>
-</div>
+    <div ref={ref} className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 border-t border-slate-200">
+      {/* 광고 프레임 (320x60 비율) */}
+      <div style={{ position:'relative', width:'100%', paddingTop:'18.75%' }}>
+        <iframe
+          src="https://ads-partners.coupang.com/widgets.html?id=915461&template=carousel&trackingCode=AF3609977&subId=&width=600&height=100&tsource="
+          style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0 }}
+          scrolling="no"
+          referrerPolicy="unsafe-url"
+          title="쿠팡 파트너스 광고"
+        />
+      </div>
+      {/* 고지문 */}
+      <div className="px-3 pt-1 pb-2 text-[10px] leading-tight text-slate-500 text-center">
+        * 본 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+        <a href="https://link.coupang.com/a/AF3609977" target="_blank" rel="noopener noreferrer nofollow ugc" className="underline ml-1">쿠팡 링크</a>
+      </div>
     </div>
   );
-}
-
+});

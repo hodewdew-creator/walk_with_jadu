@@ -398,16 +398,23 @@ function Legend({ themeColor }){
 function CoupangAd(){
   return (
     <div className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 border-t border-slate-200">
-      <div style={{ position:'relative', width:'100%', paddingTop:'18.75%' }}>
-        <iframe
-          src="https://ads-partners.coupang.com/widgets.html?id=915461&template=carousel&trackingCode=AF3609977&subId=&width=600&height=100&tsource="
-          style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0 }}
-          scrolling="no"
-          referrerPolicy="unsafe-url"
-          browsingtopics=""
-          title="쿠팡 파트너스 광고"
-        />
-      </div>
+    <div style={{ display:'flex', alignItems:'center', gap:'12px', margin:'16px 0' }}>
+  <div style={{ flex:'0 0 auto', width:'160px', aspectRatio:'320 / 75' }}>
+    <iframe
+      src="https://coupa.ng/cjPNMq"
+      style={{ width:'100%', height:'100%', border:0 }}
+      frameBorder="0"
+      scrolling="no"
+      referrerPolicy="unsafe-url"
+      title="쿠팡 파트너스 광고"
+    />
+  </div>
+
+  <p style={{ fontSize:'11px', color:'#999', lineHeight:1.4, margin:0 }}>
+    ※ 본 배너는 쿠팡 파트너스 광고이며,<br />
+    구매 시 일정액의 수수료를 받을 수 있습니다.
+  </p>
+</div>
     </div>
   );
 }

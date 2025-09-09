@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, forwardRef } from "react";
+import React, { useEffect, useRef, useState} from "react";
 
 /** 파일: src/App.jsx — 오늘 걸음 원 + 월간 3~4층 블럭(31일은 4층, 21 위) + 테스트 입력 + 광고 + 고지문 */
 
@@ -25,18 +25,6 @@ export default function WalkTrackerApp() {
   const [viewDate, setViewDate] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [data, setData] = useState({});
   const [themeColor, setThemeColor] = useState("#38bdf8");
-
-  // 하단 고정 광고 높이 측정 → 본문 패딩 보정(세로 스크롤 방지)
-  const footerRef = useRef(null);
-  const [footerH, setFooterH] = useState(100);
-  useEffect(() => {
-    const measure = () => setFooterH(footerRef.current?.offsetHeight || 100);
-    measure();
-    const onR = () => measure();
-    window.addEventListener("resize", onR);
-    const id = setInterval(measure, 500);
-    return () => { window.removeEventListener("resize", onR); clearInterval(id); };
-  }, []);
 
   // 테스트 입력 패널
   const [editOpen, setEditOpen] = useState(false);
@@ -161,7 +149,7 @@ export default function WalkTrackerApp() {
 
   return (
     <div className="min-h-screen" style={{ background: themeColor + "10" }}>
-      <div className="max-w-sm mx-auto p-5 flex flex-col items-center relative" style={{ paddingBottom: (footerH + 10) + 'px' }}>
+  <div className="max-w-sm mx-auto p-5 flex flex-col items-center relative">
         {/* 팔레트 버튼 */}
         <label className="absolute top-3 right-3 cursor-pointer" title="테마 색 변경">
           🎨
@@ -268,7 +256,7 @@ export default function WalkTrackerApp() {
       </div>
 
       {/* 하단 고정: 쿠팡 파트너스 배너 + 고지문 */}
-      <CoupangAd ref={footerRef} />
+ <CoupangAd />
     </div>
   );
 }
@@ -436,9 +424,9 @@ function Legend({ themeColor }){
   );
 }
 
-const CoupangAd = forwardRef(function CoupangAd(_, ref){
+function CoupangAd(){
   return (
-    <div ref={ref} className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 border-t border-slate-200">
+    <div className="mt-4 bg-white/95 border-t border-slate-200">
       {/* 광고 프레임 (320x60 비율) */}
       <div style={{ position:'relative', width:'100%', paddingTop:'18.75%' }}>
         <iframe
@@ -452,8 +440,11 @@ const CoupangAd = forwardRef(function CoupangAd(_, ref){
       {/* 고지문 */}
       <div className="px-3 pt-1 pb-2 text-[10px] leading-tight text-slate-500 text-center">
         * 본 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
-        <a href="https://link.coupang.com/a/AF3609977" target="_blank" rel="noopener noreferrer nofollow ugc" className="underline ml-1">쿠팡 링크</a>
+        <a href="https://link.coupang.com/a/AF3609977" target="_blank" rel="noopener noreferrer nofollow ugc" className="underline ml-1">쿠팡 링크(https://link.coupang.com/a/AF3609977)</a>
       </div>
     </div>
+  );
+}
+
   );
 });

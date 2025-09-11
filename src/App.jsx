@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-
 /** 파일: src/App.jsx — UI 수정 3차
  *  - '오늘' 블록 강조(테마색 링 + 오라) 추가
  *  - 비 배지(빗방울) 아이콘 크기 확대
@@ -49,8 +48,7 @@ export default function WalkTrackerApp() {
   const [tmpFloors, setTmpFloors] = useState("");
 
   // 멘트 + 1분마다 갱신
-  import messagesKO from "./copy/messages_ko.json";
-  const autoRotateMsg = true;
+const autoRotateMsg = true;
   const [messages] = useState(messagesKO);
   const [msgIndex, setMsgIndex] = useState(() => Math.floor(Math.random() * messages.length));
   const msgTimer = useRef(null);
@@ -640,3 +638,4 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+

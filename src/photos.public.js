@@ -3,7 +3,8 @@
 
 export async function loadPhotosManifest() {
   if (window.__photosManifest) return window.__photosManifest;
-  const res = await fetch("/photos/manifest.json", { cache: "no-store" });
+ const base = location.protocol === "file:" ? "" : "/";
+ const res = await fetch(`${base}photos/manifest.json`, { cache: "no-store" });
   if (!res.ok) throw new Error("manifest fetch failed");
   const json = await res.json();
   window.__photosManifest = json;

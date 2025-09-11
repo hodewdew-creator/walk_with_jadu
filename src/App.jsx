@@ -159,26 +159,59 @@ export default function WalkTrackerApp() {
     Array.from({ length: 10 }, (_, i) => i + 21),  // 21~30
   ];
 
-  return (
-    <div className="min-h-screen" style={{ background: themeColor + "10" }}>
-      <div className="max-w-sm mx-auto p-5 flex flex-col items-center relative" style={{ paddingBottom: (footerH + 10) + 'px' }}>
-        {/* 팔레트 버튼 */}
-        <label className="absolute top-3 right-3 cursor-pointer" title="테마 색 변경">
+return (
+  <div className="min-h-screen" style={{ background: themeColor + "10" }}>
+    <div
+      className="max-w-sm mx-auto p-5 flex flex-col items-center relative"
+      style={{ paddingBottom: (footerH + 10) + "px" }}
+    >
+      {/* 🎨 팔레트 버튼 + 🅲 버튼 */}
+      <div className="absolute top-3 right-3 flex items-center gap-2">
+        {/* 🎨 테마 색 변경 */}
+        <label className="cursor-pointer" title="테마 색 변경">
           🎨
-          <input type="color" value={themeColor} onChange={(e)=>setThemeColor(e.target.value)} className="opacity-0 w-0 h-0" />
+          <input
+            type="color"
+            value={themeColor}
+            onChange={(e) => setThemeColor(e.target.value)}
+            className="opacity-0 w-0 h-0"
+          />
         </label>
 
-        {/* 상단: 초복이 사진 + 멘트 */}
-        <div className="mb-4 flex flex-col items-center">
-          <div className="w-32 h-32 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2" aria-label="초복이">
-            {dogImages[photoGroup] ? (
-              <img src={dogImages[photoGroup]} alt="초복이" className="w-full h-full object-cover" />
-            ) : (
-              <DogFallbackIcon />
-            )}
-          </div>
-          <div className="text-slate-700 font-semibold text-center">{messages[msgIndex]}</div>
+        {/* 🅲 쿠팡 페이지 버튼 */}
+        <button
+          className="text-sm"
+          title="쿠팡 광고 페이지"
+          onClick={() => {
+            // TODO: 나중에 실제 주소로 교체
+            window.location.href = "https://";
+          }}
+        >
+          🅲
+        </button>
+      </div>
+
+      {/* 상단: 초복이 사진 + 멘트 */}
+      <div className="mb-4 flex flex-col items-center">
+        <div
+          className="w-32 h-32 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2"
+          aria-label="초복이"
+        >
+          {dogImages[photoGroup] ? (
+            <img
+              src={dogImages[photoGroup]}
+              alt="초복이"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <DogFallbackIcon />
+          )}
         </div>
+        <div className="text-slate-700 font-semibold text-center">
+          {messages[msgIndex]}
+        </div>
+      </div>
+
 
         {/* 메인 원 */}
         <div className="relative rounded-full bg-white shadow-md flex flex-col items-center justify-center mb-3"

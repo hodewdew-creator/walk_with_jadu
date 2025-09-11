@@ -1,20 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 
 /**
- * Walk With Jadu — Clean App.jsx
+ * Walk With Jadu — Final Clean App.jsx
  * - 🅲 링크 유지 (https://walk-with-jadu-coup.vercel.app)
  * - 하단 광고 제거
- * - 31일: 사각형 블록으로 상단바(왼쪽) 배치, ◀ ▶은 오른쪽
+ * - 31일: 사각형 블록 상단바(왼쪽), ◀ ▶은 오른쪽
  * - 비/제외 토글 제한 없음 (더블탭=비, 길게=제외)
- * - 4,000–7,999보: 테마색 옅은 톤으로 칠하고 숫자만 표시(발바닥 없음)
+ * - 4,000–7,999보: 테마색 옅은 톤, 발바닥 없음 (숫자만 표시)
  * - 오늘: 테마색 링 + 오라 하이라이트
- * - 초복이 사진 더 크게(clamp) — 스크롤 없는 범위
- * - 상단 멘트는 /messages_ko.json에서 fetch, 실패 시 기본 문구로 폴백
+ * - 초복이 사진 크게(clamp), 스크롤 방지
+ * - 상단 멘트: /messages_ko.json fetch, 실패 시 기본 문구 폴백
+ * - 층수(UI/저장) 제거
  */
 
 const COUPANG_URL = "https://walk-with-jadu-coup.vercel.app";
 
-// 로컬 날짜 키
+// 날짜 → 키 포맷
 const fmt = (d) => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -24,7 +25,7 @@ const fmt = (d) => {
 
 const STORE_KEY = "walklog-v9";
 
-// (추후 교체) 초복이 사진 세트 매핑
+// (임시) 초복이 사진 매핑
 const dogImages = {
   verylow: "/dog-temp.png",
   low: "/dog-temp.png",
@@ -33,7 +34,7 @@ const dogImages = {
 };
 
 export default function WalkTrackerApp() {
-  // 날짜 베이스
+  // 오늘/보이는 달
   const [today] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -49,7 +50,7 @@ export default function WalkTrackerApp() {
   const [data, setData] = useState({});
   const [themeColor, setThemeColor] = useState("#38bdf8");
 
-  // 멘트 (기본값 + fetch 교체)
+  // 상단 멘트
   const autoRotateMsg = true;
   const DEFAULT_MESSAGES = [
     "산책 좋아요 🐾",
@@ -74,7 +75,7 @@ export default function WalkTrackerApp() {
     };
   }, [autoRotateMsg, messages.length]);
 
-  // 외부 메시지 로드 (public/messages_ko.json) — 실패 시 폴백 유지
+  // 메시지 로드 (public/messages_ko.json)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -86,16 +87,14 @@ export default function WalkTrackerApp() {
           setMessages(arr);
           setMsgIndex((i) => i % arr.length);
         }
-      } catch (e) {
-        // ignore; keep fallback
-      }
+      } catch {}
     })();
     return () => {
       alive = false;
     };
   }, []);
 
-  // 로드/저장
+  // 로드/저장 (localStorage)
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
@@ -109,15 +108,13 @@ export default function WalkTrackerApp() {
     localStorage.setItem(STORE_KEY, JSON.stringify({ data, themeColor }));
   }, [data, themeColor]);
 
-  // 보이는 달 계산값
+  // 보이는 달 계산
   const vy = viewDate.getFullYear();
   const vm = viewDate.getMonth();
   const daysInMonth = new Date(vy, vm + 1, 0).getDate();
-  const monthStart = fmt(new Date(vy, vm, 1));
-  const monthEnd = fmt(new Date(vy, vm, daysInMonth));
   const has31 = daysInMonth === 31;
 
-  // 오늘 키/상태
+  // 오늘 상태
   const todayKey = fmt(today);
   const t = data[todayKey] || {};
   const todaySteps = Math.max(0, t.steps || 0);
@@ -131,10 +128,10 @@ export default function WalkTrackerApp() {
     ? "mid"
     : "high";
 
-  // 유틸: 월 이동
+  // 월 이동
   const shiftMonth = (base, diff) => new Date(base.getFullYear(), base.getMonth() + diff, 1);
 
-  // 비/제외 토글 (제한 없음)
+  // 비/제외 토글
   function toggleRain(key) {
     setData((p) => {
       const it = p[key] || {};
@@ -148,39 +145,49 @@ export default function WalkTrackerApp() {
     });
   }
 
-  // 테스트 입력 패널
+  // 수동 입력 패널 상태
   const [editOpen, setEditOpen] = useState(false);
   const [tmpDate, setTmpDate] = useState("");
   const [tmpSteps, setTmpSteps] = useState("");
-function openEditor() {
+
+  function openEditor() {
     const inView = today.getFullYear() === vy && today.getMonth() === vm;
     const base = inView ? today : new Date(vy, vm, 1);
     const k = fmt(base);
     const it = data[k] || {};
     setTmpDate(k);
     setTmpSteps(String(it.steps ?? 0));
-setEditOpen(true);
+    setEditOpen(true);
   }
+
   function onChangeEditorDate(v) {
-    if (!v) return;
-    if (v < monthStart || v > monthEnd) return;
-    setTmpDate(v);
-    const it = data[v] || {};
+    const d = new Date(v);
+    if (!v || isNaN(d)) return;
+    d.setHours(0, 0, 0, 0);
+    const k = fmt(d);
+    setTmpDate(k);
+    const it = data[k] || {};
     setTmpSteps(String(it.steps ?? 0));
-}
+    // 다른 달이면 달력 전환
+    if (d.getFullYear() !== vy || d.getMonth() !== vm) {
+      setViewDate(new Date(d.getFullYear(), d.getMonth(), 1));
+    }
+  }
+
   function saveEditor() {
     const d = new Date(tmpDate);
-    if (!tmpDate || isNaN(d)) { setEditOpen(false); return; }
-    d.setHours(0,0,0,0);
+    if (!tmpDate || isNaN(d)) {
+      setEditOpen(false);
+      return;
+    }
+    d.setHours(0, 0, 0, 0);
     const key = fmt(d);
     const s = Math.max(0, parseInt(tmpSteps || "0", 10) || 0);
     setData((p) => ({ ...p, [key]: { ...(p[key] || {}), steps: s } }));
     setEditOpen(false);
-  }), steps: s } }));
-    setEditOpen(false);
   }
 
-  // 1~30 (3층), 31은 상단바로
+  // 1~30 (3층), 31은 상단바
   const rows = [
     Array.from({ length: 10 }, (_, i) => i + 1),   // 1~10
     Array.from({ length: 10 }, (_, i) => i + 11),  // 11~20
@@ -189,10 +196,7 @@ setEditOpen(true);
 
   return (
     <div className="min-h-screen" style={{ background: themeColor + "10" }}>
-      <div
-        className="max-w-sm mx-auto p-5 flex flex-col items-center relative"
-        style={{ paddingBottom: "10px" }}
-      >
+      <div className="max-w-sm mx-auto p-5 flex flex-col items-center relative" style={{ paddingBottom: "10px" }}>
         {/* 🎨 팔레트 + 🅲 링크 */}
         <div className="absolute top-3 right-3 flex items-center gap-3">
           <a
@@ -224,11 +228,7 @@ setEditOpen(true);
             style={{ width: "clamp(140px, 38vw, 192px)", height: "clamp(140px, 38vw, 192px)" }}
           >
             {dogImages[photoGroup] ? (
-              <img
-                src={dogImages[photoGroup]}
-                alt="초복이"
-                className="w-full h-full object-cover"
-              />
+              <img src={dogImages[photoGroup]} alt="초복이" className="w-full h-full object-cover" />
             ) : (
               <DogFallbackIcon size={160} />
             )}
@@ -241,11 +241,7 @@ setEditOpen(true);
         {/* 메인 원 */}
         <div
           className="relative rounded-full bg-white shadow-md flex flex-col items-center justify-center mb-3"
-          style={{
-            width: "clamp(200px, 56vw, 256px)",
-            height: "clamp(200px, 56vw, 256px)",
-            border: `6px solid ${themeColor}`,
-          }}
+          style={{ width: "clamp(200px, 56vw, 256px)", height: "clamp(200px, 56vw, 256px)", border: `6px solid ${themeColor}` }}
         >
           <button
             onClick={openEditor}
@@ -260,14 +256,12 @@ setEditOpen(true);
             {typeof t.steps === "number" ? t.steps.toLocaleString() : 0}
           </div>
           <div className="text-slate-500 text-sm mt-1">걸음수</div>
-</div>
+        </div>
 
-        {/* ▶ 테스트용 수동 입력 패널 */}
+        {/* ▶ 수동 입력 패널 */}
         {editOpen && (
           <div className="w-full mb-4 p-3 rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="text-[11px] text-slate-500 mb-2">
-              테스트용 수동 입력 (현재 보이는 달에서만)
-            </div>
+            <div className="text-[11px] text-slate-500 mb-2">테스트용 수동 입력 (어떤 날짜든 가능)</div>
             <div className="grid grid-cols-3 gap-3 items-end mb-3">
               <label className="col-span-2 text-sm text-slate-700">
                 날짜
@@ -297,7 +291,7 @@ setEditOpen(true);
                   onChange={(e) => setTmpSteps(e.target.value)}
                 />
               </label>
-</div>
+            </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {[0, 5000, 8000, 16000].map((v) => (
                 <button
@@ -310,28 +304,17 @@ setEditOpen(true);
               ))}
             </div>
             <div className="flex justify-end gap-2 mt-3">
-              <button
-                onClick={() => setEditOpen(false)}
-                className="px-3 py-1 text-sm rounded border"
-              >
-                취소
-              </button>
-              <button
-                onClick={saveEditor}
-                className="px-3 py-1 text-sm rounded text-white"
-                style={{ background: themeColor }}
-              >
-                저장
-              </button>
+              <button onClick={() => setEditOpen(false)} className="px-3 py-1 text-sm rounded border">취소</button>
+              <button onClick={saveEditor} className="px-3 py-1 text-sm rounded text-white" style={{ background: themeColor }}>저장</button>
             </div>
           </div>
         )}
 
         {/* 달력 카드 */}
         <section className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3">
-          {/* 상단 바: 왼쪽 31일(있을때만) / 가운데 YYYY.M / 오른쪽 ◀ ▶ */}
+          {/* 상단 바: 왼쪽 31일 / 가운데 YYYY.M / 오른쪽 ◀ ▶ */}
           <div className="flex items-center mb-2">
-            {/* 왼쪽: 31일 블록 (사각형) */}
+            {/* 왼쪽: 31일 블록 */}
             <div className="flex items-center min-w-[2rem]">
               {has31 && (
                 <div className="w-8">
@@ -359,28 +342,16 @@ setEditOpen(true);
 
             {/* 오른쪽: 네비 버튼 */}
             <div className="flex items-center gap-1 text-slate-500">
-              <button
-                className="p-1 text-[13px] rounded hover:bg-slate-50"
-                onClick={() => setViewDate((d) => shiftMonth(d, -1))}
-                aria-label="이전 달"
-              >
-                ◀
-              </button>
-              <button
-                className="p-1 text-[13px] rounded hover:bg-slate-50"
-                onClick={() => setViewDate((d) => shiftMonth(d, +1))}
-                aria-label="다음 달"
-              >
-                ▶
-              </button>
+              <button className="p-1 text-[13px] rounded hover:bg-slate-50" onClick={() => setViewDate((d) => shiftMonth(d, -1))} aria-label="이전 달">◀</button>
+              <button className="p-1 text-[13px] rounded hover:bg-slate-50" onClick={() => setViewDate((d) => shiftMonth(d, +1))} aria-label="다음 달">▶</button>
             </div>
           </div>
 
-          {/* 아래: 1~30 블록 3층 */}
+          {/* 아래: 1~30 (3층) */}
           <div className="flex flex-col gap-1">
             {/* row3: 21~30 */}
             <div className="grid grid-cols-10 gap-1">
-              {rows[2].map((n) => (
+              {Array.from({ length: 10 }, (_, i) => 21 + i).map((n) => (
                 <BlockCell
                   key={n}
                   y={vy}
@@ -398,7 +369,7 @@ setEditOpen(true);
             </div>
             {/* row2: 11~20 */}
             <div className="grid grid-cols-10 gap-1">
-              {rows[1].map((n) => (
+              {Array.from({ length: 10 }, (_, i) => 11 + i).map((n) => (
                 <BlockCell
                   key={n}
                   y={vy}
@@ -416,7 +387,7 @@ setEditOpen(true);
             </div>
             {/* row1: 1~10 */}
             <div className="grid grid-cols-10 gap-1">
-              {rows[0].map((n) => (
+              {Array.from({ length: 10 }, (_, i) => 1 + i).map((n) => (
                 <BlockCell
                   key={n}
                   y={vy}
@@ -434,7 +405,7 @@ setEditOpen(true);
             </div>
           </div>
 
-          {/* 주석 한 줄 */}
+          {/* 범례 한 줄 */}
           <LegendOneLine themeColor={themeColor} />
         </section>
       </div>
@@ -577,7 +548,7 @@ function hexToRgba(hex, a = 1) {
   }
 }
 
-// 아이콘들
+// 아이콘
 function PawIcon({ size = 22 }) {
   const c = "#ffffff", sw = 1.2;
   return (
@@ -642,3 +613,4 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+

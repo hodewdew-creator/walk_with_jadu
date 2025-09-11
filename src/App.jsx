@@ -20,6 +20,8 @@ export default function WalkTrackerApp() {
   const [viewDate, setViewDate] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [data, setData] = useState({});
   const [themeColor, setThemeColor] = useState("#38bdf8");
+  // 월간 요약 팝업
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   // 사진 manifest 로드 (public/photos/manifest.json)
   const [photosManifest, setPhotosManifest] = useState(null);
@@ -169,34 +171,36 @@ return (
     >
 
 {/* 🅲 쿠팡 버튼 + 🎨 팔레트 버튼 */}
-<div className="absolute top-3 right-3 flex items-center gap-3">
-  {/* 쿠팡 페이지 버튼 (왼쪽) */}
-  <button
-    className="text-2xl leading-none"
-    title="쿠팡 광고 페이지"
-    onClick={() => {
-      // 공개용: 새 탭으로 열기
-      window.open("https://walk-with-jadu-coup.vercel.app/", "_blank", "noopener,noreferrer");
-      // 같은 탭 이동을 원하면 위 한 줄 대신 아래 사용
-      // window.location.href = "https://walk-with-jadu-coup.vercel.app/";
-    }}
-  >
-    🅲
-  </button>
-
-  {/* 팔레트 버튼 (오른쪽) */}
-  <label className="cursor-pointer" title="테마 색 변경">
-    🎨
-    <input
-      type="color"
-      value={themeColor}
-      onChange={(e) => setThemeColor(e.target.value)}
-      className="opacity-0 w-0 h-0"
-    />
-  </label>
-</div>
-
-      {/* 상단: 초복이 사진 + 멘트 */}
+<div className="absolute top-3 right-3 z-10 flex items-center gap-3">
+          <a
+            href={COUPANG_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-lg hover:opacity-80"
+            title="쿠팡 링크"
+            aria-label="쿠팡 링크"
+          >
+            🅲
+          </a>
+          <label className="cursor-pointer" title="테마 색 변경">
+            🎨
+            <input
+              type="color"
+              value={themeColor}
+              onChange={(e) => setThemeColor(e.target.value)}
+              className="opacity-0 w-0 h-0"
+            />
+          </label>
+          <button
+            onClick={() => setSummaryOpen(true)}
+            className="text-lg hover:opacity-80"
+            title="월간 요약 보기"
+            aria-label="월간 요약 보기"
+          >
+            📊
+          </button>
+        </div>
+{/* 상단: 초복이 사진 + 멘트 */}
       <div className="mb-4 flex flex-col items-center">
         <div
           className="w-32 h-32 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2"
@@ -483,9 +487,5 @@ const CoupangAd = forwardRef(function CoupangAd(_, ref){
     </div>
   );
 });
-
-
-
-
 
 

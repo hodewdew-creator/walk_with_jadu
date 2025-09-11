@@ -172,7 +172,6 @@ export default function App() {
     if (!nativeAvailable) return;
     try { window.AndroidSteps?.getMonth?.(vy, vm + 1); } catch {}
   }, [vy, vm, nativeAvailable]);
-);
 
   // 메시지 자동 회전
   useEffect(() => {

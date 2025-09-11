@@ -1,16 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 
-/** 파일: src/App.jsx — UI 수정 3차
- *  - '오늘' 블록 강조(테마색 링 + 오라) 추가
- *  - 비 배지(빗방울) 아이콘 크기 확대
- *  - 초복이 사진 영역을 반응형으로 더 크게 (스크롤 최소화 위한 clamp)
- *  - 31일: 사각형, 상단바 왼쪽 배치(◀ ▶은 오른쪽) — 이전 단계 유지
- *  - 팔레트 옆 🅲 링크 유지, 하단 광고 없음
+/**
+ * Walk With Jadu — Clean App.jsx
+ * - 🅲 링크 유지 (https://walk-with-jadu-coup.vercel.app)
+ * - 하단 광고 제거
+ * - 31일: 사각형 블록으로 상단바(왼쪽) 배치, ◀ ▶은 오른쪽
+ * - 비/제외 토글 제한 없음 (더블탭=비, 길게=제외)
+ * - 4,000–7,999보: 테마색 옅은 톤으로 칠하고 숫자만 표시(발바닥 없음)
+ * - 오늘: 테마색 링 + 오라 하이라이트
+ * - 초복이 사진 더 크게(clamp) — 스크롤 없는 범위
+ * - 상단 멘트는 /messages_ko.json에서 fetch, 실패 시 기본 문구로 폴백
  */
 
 const COUPANG_URL = "https://walk-with-jadu-coup.vercel.app";
 
-// 로컬 날짜 키(UTC 오프셋 이슈 방지)
+// 로컬 날짜 키
 const fmt = (d) => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -18,7 +22,7 @@ const fmt = (d) => {
   return `${y}-${m}-${day}`;
 };
 
-const STORE_KEY = "walklog-v9"; // 기존 키 유지 (로컬 데이터 보존)
+const STORE_KEY = "walklog-v9";
 
 // (추후 교체) 초복이 사진 세트 매핑
 const dogImages = {
@@ -29,6 +33,7 @@ const dogImages = {
 };
 
 export default function WalkTrackerApp() {
+  // 날짜 베이스
   const [today] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -39,34 +44,56 @@ export default function WalkTrackerApp() {
     d.setHours(0, 0, 0, 0);
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
+
+  // 데이터/테마
   const [data, setData] = useState({});
   const [themeColor, setThemeColor] = useState("#38bdf8");
 
-  // 테스트 입력 패널
-  const [editOpen, setEditOpen] = useState(false);
-  const [tmpDate, setTmpDate] = useState("");
-  const [tmpSteps, setTmpSteps] = useState("");
-  const [tmpFloors, setTmpFloors] = useState("");
-
-  // 멘트 + 1분마다 갱신
+  // 멘트 (기본값 + fetch 교체)
   const autoRotateMsg = true;
-  const DEFAULT_MESSAGES = ["산책 좋아요 🐾","마음도 산책 중","오늘도 화이팅!","초복이와 함께","바람이 상쾌해요"];
+  const DEFAULT_MESSAGES = [
+    "산책 좋아요 🐾",
+    "마음도 산책 중",
+    "오늘도 화이팅!",
+    "초복이와 함께",
+    "바람이 상쾌해요",
+  ];
   const [messages, setMessages] = useState(DEFAULT_MESSAGES);
-// 외부 JSON에서 로드 + 안전한 폴백
-
-
-  const [msgIndex, setMsgIndex] = useState(() => Math.floor(Math.random() * Math.max(1, messages.length)));
-=> Math.floor(Math.random()*Math.max(1, messages.length)))=> Math.floor(Math.random()*Math.max(1, messages.length)));
+  const [msgIndex, setMsgIndex] = useState(() =>
+    Math.floor(Math.random() * Math.max(1, DEFAULT_MESSAGES.length))
+  );
   const msgTimer = useRef(null);
+
   useEffect(() => {
     if (!autoRotateMsg) return;
     msgTimer.current = setInterval(() => {
-      setMsgIndex((i) => (i + 1) % messages.length);
+      setMsgIndex((i) => (i + 1) % Math.max(1, messages.length));
     }, 60_000);
     return () => {
       if (msgTimer.current) clearInterval(msgTimer.current);
     };
-  }, [autoRotateMsg]);
+  }, [autoRotateMsg, messages.length]);
+
+  // 외부 메시지 로드 (public/messages_ko.json) — 실패 시 폴백 유지
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch("/messages_ko.json", { cache: "no-store" });
+        if (!res.ok) return;
+        const arr = await res.json();
+        if (alive && Array.isArray(arr) && arr.length) {
+          setMessages(arr);
+          setMsgIndex((i) => i % arr.length);
+        }
+      } catch (e) {
+        // ignore; keep fallback
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // 로드/저장
   useEffect(() => {
@@ -76,33 +103,11 @@ export default function WalkTrackerApp() {
         setData(saved.data || {});
         if (saved.themeColor) setThemeColor(saved.themeColor);
       }
-    } catch (e) {}
+    } catch {}
   }, []);
   useEffect(() => {
     localStorage.setItem(STORE_KEY, JSON.stringify({ data, themeColor }));
   }, [data, themeColor]);
-
-  
-  // 외부 메시지 로드 (public/messages_ko.json)
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const res = await fetch("/messages_ko.json", { cache: "no-store" });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const arr = await res.json();
-        if (alive && Array.isArray(arr) && arr.length) {
-          setMessages(arr);
-          // messages 갱신 후 현재 인덱스가 범위를 벗어나지 않도록 보정
-          setMsgIndex((i) => i % arr.length);
-        }
-      } catch (e) {
-        // 실패 시 DEFAULT_MESSAGES 유지
-        console.warn("messages_ko.json load failed:", e);
-      }
-    })();
-    return () => { alive = false; };
-  }, []);
 
   // 보이는 달 계산값
   const vy = viewDate.getFullYear();
@@ -112,10 +117,8 @@ export default function WalkTrackerApp() {
   const monthEnd = fmt(new Date(vy, vm, daysInMonth));
   const has31 = daysInMonth === 31;
 
-  // 오늘/키
+  // 오늘 키/상태
   const todayKey = fmt(today);
-
-  // 오늘 키/값 (메인 원 표시용 + 초복이 사진 상태)
   const t = data[todayKey] || {};
   const todaySteps = Math.max(0, t.steps || 0);
   const photoGroup = t.excluded
@@ -131,15 +134,13 @@ export default function WalkTrackerApp() {
   // 유틸: 월 이동
   const shiftMonth = (base, diff) => new Date(base.getFullYear(), base.getMonth() + diff, 1);
 
-  // 비 토글: 제한 없이
+  // 비/제외 토글 (제한 없음)
   function toggleRain(key) {
     setData((p) => {
       const it = p[key] || {};
       return { ...p, [key]: { ...it, rain: !it.rain } };
     });
   }
-
-  // 제외 토글: 제한 없이
   function toggleExcluded(key) {
     setData((p) => {
       const it = p[key] || {};
@@ -147,7 +148,12 @@ export default function WalkTrackerApp() {
     });
   }
 
-  // 테스트 입력 열기/저장
+  // 테스트 입력 패널
+  const [editOpen, setEditOpen] = useState(false);
+  const [tmpDate, setTmpDate] = useState("");
+  const [tmpSteps, setTmpSteps] = useState("");
+  const [tmpFloors, setTmpFloors] = useState("");
+
   function openEditor() {
     const inView = today.getFullYear() === vy && today.getMonth() === vm;
     const base = inView ? today : new Date(vy, vm, 1);
@@ -174,7 +180,7 @@ export default function WalkTrackerApp() {
     setEditOpen(false);
   }
 
-  // 3층(1~30) 구성 (31일은 상단 바로 이동)
+  // 1~30 (3층), 31은 상단바로
   const rows = [
     Array.from({ length: 10 }, (_, i) => i + 1),   // 1~10
     Array.from({ length: 10 }, (_, i) => i + 11),  // 11~20
@@ -185,7 +191,7 @@ export default function WalkTrackerApp() {
     <div className="min-h-screen" style={{ background: themeColor + "10" }}>
       <div
         className="max-w-sm mx-auto p-5 flex flex-col items-center relative"
-        style={{ paddingBottom: "10px" }} // 하단 광고 제거 → 여유 패딩만 유지
+        style={{ paddingBottom: "10px" }}
       >
         {/* 🎨 팔레트 + 🅲 링크 */}
         <div className="absolute top-3 right-3 flex items-center gap-3">
@@ -210,7 +216,7 @@ export default function WalkTrackerApp() {
           </label>
         </div>
 
-        {/* 상단: 초복이 사진 + 멘트 (사진 더 크게, 반응형) */}
+        {/* 상단: 초복이 사진 + 멘트 */}
         <div className="mb-4 flex flex-col items-center">
           <div
             className="rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2"
@@ -228,7 +234,7 @@ export default function WalkTrackerApp() {
             )}
           </div>
           <div className="text-slate-700 font-semibold text-center">
-            {messages[msgIndex]}
+            {messages[msgIndex] || DEFAULT_MESSAGES[msgIndex % DEFAULT_MESSAGES.length]}
           </div>
         </div>
 
@@ -241,7 +247,6 @@ export default function WalkTrackerApp() {
             border: `6px solid ${themeColor}`,
           }}
         >
-          {/* ✏️ 테스트 입력 버튼 */}
           <button
             onClick={openEditor}
             className="absolute top-2 right-2 text-[11px] px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200"
@@ -465,7 +470,7 @@ function BlockCell({
   cellWidth,
   todayKey,
 }) {
-  if (n > maxDay) return null; // 존재하지 않는 날짜 칸은 생성하지 않음
+  if (n > maxDay) return null;
   const date = new Date(y, m, n);
   const key = fmt(date);
   const item = data[key] || {};
@@ -477,7 +482,7 @@ function BlockCell({
   const isPartial = !item.excluded && s >= 4000 && s < goal;
   const isToday = key === todayKey;
 
-  // 제스처: 길게 눌러 제외, 더블탭 비
+  // 제스처
   const timerRef = useRef(null);
   const down = () => {
     timerRef.current = setTimeout(() => onToggleExcluded(key), 500);
@@ -495,10 +500,10 @@ function BlockCell({
     (item.rain ? " · 비" : "") +
     (isToday ? " · 오늘" : "");
 
-  // 오늘 하이라이트 스타일: 테마색 링 + 은은한 오라 (레이아웃 영향 없음)
-  const ringShadow = isToday && !item.excluded
-    ? `0 0 0 2px ${themeColor}, 0 0 0 6px ${hexToRgba(themeColor, 0.22)}`
-    : undefined;
+  const ringShadow =
+    isToday && !item.excluded
+      ? `0 0 0 2px ${themeColor}, 0 0 0 6px ${hexToRgba(themeColor, 0.22)}`
+      : undefined;
 
   return (
     <div
@@ -507,7 +512,12 @@ function BlockCell({
       onPointerLeave={up}
       onDoubleClick={dbl}
       className="relative h-8 rounded flex items-center justify-center text-[12px] select-none"
-      style={{ backgroundColor: color, color: "white", width: cellWidth || undefined, boxShadow: ringShadow }}
+      style={{
+        backgroundColor: color,
+        color: "white",
+        width: cellWidth || undefined,
+        boxShadow: ringShadow,
+      }}
       title={label}
       aria-label={label}
     >
@@ -519,7 +529,6 @@ function BlockCell({
         n
       )}
 
-      {/* 비 배지: 제외가 아닌 모든 상태에서 표시 가능 (사이즈 확대) */}
       {!item.excluded && item.rain ? (
         <div className="absolute top-[1px] left-[1px]">
           <RainCancelIcon size={18} />
@@ -530,13 +539,13 @@ function BlockCell({
 }
 
 function dayClass(item, goal, themeColor) {
-  if (!item) return "#e2e8f0"; // 미입력: 아주 밝은 회색
-  if (item.excluded) return "#ffffff"; // 제외: 흰 배경 (검은 X가 중앙)
+  if (!item) return "#e2e8f0"; // 미입력
+  if (item.excluded) return "#ffffff"; // 제외
   const s = item.steps || 0;
-  if (s >= goal * 2) return darkenHex(themeColor, 0.7); // 2배: 테마색 진하게
-  if (s >= goal) return themeColor; // 달성: 테마색
-  if (s >= 4000) return lightenHex(themeColor, 0.55); // 부분 달성: 옅은 톤
-  return "#cbd5e1"; // 미달: 밝은 회색
+  if (s >= goal * 2) return darkenHex(themeColor, 0.7); // 2배
+  if (s >= goal) return themeColor; // 달성
+  if (s >= 4000) return lightenHex(themeColor, 0.55); // 부분 달성
+  return "#cbd5e1"; // 미달
 }
 
 function darkenHex(hex, factor = 0.8) {
@@ -548,7 +557,7 @@ function darkenHex(hex, factor = 0.8) {
     const b = Math.round(parseInt(h.slice(4, 6), 16) * factor);
     const to2 = (n) => n.toString(16).padStart(2, "0");
     return `#${to2(r)}${to2(g)}${to2(b)}`;
-  } catch (e) {
+  } catch {
     return hex;
   }
 }
@@ -565,12 +574,11 @@ function lightenHex(hex, factor = 0.5) {
     const lb = Math.round(b + (255 - b) * factor);
     const to2 = (n) => n.toString(16).padStart(2, "0");
     return `#${to2(lr)}${to2(lg)}${to2(lb)}`;
-  } catch (e) {
+  } catch {
     return hex;
   }
 }
 
-// hex → rgba(a) 유틸
 function hexToRgba(hex, a = 1) {
   try {
     let h = hex.replace("#", "");
@@ -579,46 +587,29 @@ function hexToRgba(hex, a = 1) {
     const g = parseInt(h.slice(2, 4), 16);
     const b = parseInt(h.slice(4, 6), 16);
     return `rgba(${r}, ${g}, ${b}, ${a})`;
-  } catch (e) {
+  } catch {
     return hex;
   }
 }
 
 // 아이콘들
 function PawIcon({ size = 22 }) {
-  const c = "#ffffff",
-    sw = 1.2;
+  const c = "#ffffff", sw = 1.2;
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="7" cy="7" r="3" fill={c} stroke={c} strokeWidth={sw} />
       <circle cx="17" cy="7" r="3" fill={c} stroke={c} strokeWidth={sw} />
       <circle cx="4" cy="12" r="3" fill={c} stroke={c} strokeWidth={sw} />
       <circle cx="20" cy="12" r="3" fill={c} stroke={c} strokeWidth={sw} />
-      <path
-        d="M7 18c0-3 3-5 5-5s5 2 5 5c0 2-2 4-5 4s-5-2-5-4z"
-        fill={c}
-        stroke={c}
-        strokeWidth={sw}
-      />
+      <path d="M7 18c0-3 3-5 5-5s5 2 5 5c0 2-2 4-5 4s-5-2-5-4z" fill={c} stroke={c} strokeWidth={sw} />
     </svg>
   );
 }
 
 function RainCancelIcon({ size = 22 }) {
-  const blue = "#3b82f6"; // 파란 물방울 + 흰 X
+  const blue = "#3b82f6";
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 2 C9 6,6 9,6 13 a6 6 0 0 0 12 0 c0-4-3-7-6-11z" fill={blue} />
       <path d="M9 13 l6 6 M15 13 l-6 6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
     </svg>
@@ -633,7 +624,7 @@ function ExcludeIcon({ size = 22 }) {
   );
 }
 
-function DogFallbackIcon({ size = 64 }) {
+function DogFallbackIcon({ size = 160 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
       <circle cx="32" cy="32" r="30" fill="#fde68a" />
@@ -666,4 +657,5 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+
 

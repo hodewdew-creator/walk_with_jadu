@@ -114,7 +114,7 @@ export default function App() {
   // 사진 manifest 로드
   useEffect(() => {
     loadPhotosManifest().then(setPhotosManifest).catch(() => {});
-  }, []
+  }, []);
   // 네이티브 감지 + 권한 요청
   useEffect(() => {
     const hasNative = typeof window !== 'undefined' && !!window.AndroidSteps;

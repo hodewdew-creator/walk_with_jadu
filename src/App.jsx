@@ -50,11 +50,13 @@ export default function WalkTrackerApp() {
 
   // 멘트 + 1분마다 갱신
   const autoRotateMsg = true;
+  const DEFAULT_MESSAGES = ["산책 좋아요 🐾","마음도 산책 중","오늘도 화이팅!","초복이와 함께","바람이 상쾌해요"];
+  const [messages, setMessages] = useState(DEFAULT_MESSAGES);
   // 외부 JSON에서 로드 + 안전한 폴백
   const DEFAULT_MESSAGES = [
     "산책 좋아요 🐾", "마음도 산책 중", "오늘도 화이팅!", "초복이와 함께", "바람이 상쾌해요"
   ];
-  const messagesSrc = Array.isArray(messagesKO) && messagesKO.length ? messagesKO : DEFAULT_MESSAGES;
+  const messagesSrc = Array.isArray(messages) && messages.length ? messages : DEFAULT_MESSAGES;
   const [messages] = useState(messagesSrc);
   const [msgIndex, setMsgIndex] = useState(() => Math.floor(Math.random()*Math.max(1, messages.length)))
   const msgTimer = useRef(null);
@@ -666,5 +668,6 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+
 
 

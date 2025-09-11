@@ -52,13 +52,11 @@ export default function WalkTrackerApp() {
   const autoRotateMsg = true;
   const DEFAULT_MESSAGES = ["산책 좋아요 🐾","마음도 산책 중","오늘도 화이팅!","초복이와 함께","바람이 상쾌해요"];
   const [messages, setMessages] = useState(DEFAULT_MESSAGES);
-  // 외부 JSON에서 로드 + 안전한 폴백
-  const DEFAULT_MESSAGES = [
-    "산책 좋아요 🐾", "마음도 산책 중", "오늘도 화이팅!", "초복이와 함께", "바람이 상쾌해요"
-  ];
-  const messagesSrc = Array.isArray(messages) && messages.length ? messages : DEFAULT_MESSAGES;
-  const [messages] = useState(messagesSrc);
+// 외부 JSON에서 로드 + 안전한 폴백
+
+
   const [msgIndex, setMsgIndex] = useState(() => Math.floor(Math.random()*Math.max(1, messages.length)))
+  const [msgIndex, setMsgIndex] = useState(() => Math.floor(Math.random()*Math.max(1, messages.length)));
   const msgTimer = useRef(null);
   useEffect(() => {
     if (!autoRotateMsg) return;
@@ -668,6 +666,7 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+
 
 
 

@@ -229,25 +229,6 @@ export default function WalkTrackerApp() {
           >
             📊
           </button>
-          <a
-            href={COUPANG_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-lg hover:opacity-80"
-            title="쿠팡 링크"
-            aria-label="쿠팡 링크"
-          >
-            🅲
-          </a>
-          <label className="cursor-pointer" title="테마 색 변경">
-            🎨
-            <input
-              type="color"
-              value={themeColor}
-              onChange={(e) => setThemeColor(e.target.value)}
-              className="opacity-0 w-0 h-0"
-            />
-          </label>
         </div>
 
         {/* 상단: 초복이 사진 + 멘트 */}
@@ -761,5 +742,6 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+
 
 

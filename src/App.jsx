@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 
-/** 파일: src/App.jsx — UI 수정 1차
- *  1) 31일: 사각형 블록으로 변경
- *  2) 31일이 있는 달: 상단 바 왼쪽에 31일 블록 배치 → 삼각 버튼 오른쪽으로 밀림
- *  3) 주석 한 줄: "달성 / 2배달성 / 제외 (길게) / 비 (더블탭)"
- *  - 팔레트 옆 🅲 링크는 그대로 유지
- *  - 하단 광고는 없음
+/** 파일: src/App.jsx — UI 수정 3차
+ *  - '오늘' 블록 강조(테마색 링 + 오라) 추가
+ *  - 비 배지(빗방울) 아이콘 크기 확대
+ *  - 초복이 사진 영역을 반응형으로 더 크게 (스크롤 최소화 위한 clamp)
+ *  - 31일: 사각형, 상단바 왼쪽 배치(◀ ▶은 오른쪽) — 이전 단계 유지
+ *  - 팔레트 옆 🅲 링크 유지, 하단 광고 없음
  */
 
 const COUPANG_URL = "https://walk-with-jadu-coup.vercel.app";
@@ -104,8 +104,10 @@ export default function WalkTrackerApp() {
   const monthEnd = fmt(new Date(vy, vm, daysInMonth));
   const has31 = daysInMonth === 31;
 
-  // 오늘 키/값 (메인 원 표시용 + 초복이 사진 상태)
+  // 오늘/키
   const todayKey = fmt(today);
+
+  // 오늘 키/값 (메인 원 표시용 + 초복이 사진 상태)
   const t = data[todayKey] || {};
   const todaySteps = Math.max(0, t.steps || 0);
   const photoGroup = t.excluded
@@ -121,22 +123,18 @@ export default function WalkTrackerApp() {
   // 유틸: 월 이동
   const shiftMonth = (base, diff) => new Date(base.getFullYear(), base.getMonth() + diff, 1);
 
-  // 미달 ↔ 비 토글(미달일 때만 허용)
-  function toggleRainIfGrey(key) {
+  // 비 토글: 제한 없이
+  function toggleRain(key) {
     setData((p) => {
       const it = p[key] || {};
-      const grey = !it.excluded && (it.steps || 0) < 8000;
-      if (!grey) return p;
       return { ...p, [key]: { ...it, rain: !it.rain } };
     });
   }
 
-  // 제외 토글(달성 상태에선 동작 금지)
-  function toggleExcludedSafe(key) {
+  // 제외 토글: 제한 없이
+  function toggleExcluded(key) {
     setData((p) => {
       const it = p[key] || {};
-      const achieved = !it.excluded && (it.steps || 0) >= 8000;
-      if (achieved) return p;
       return { ...p, [key]: { ...it, excluded: !it.excluded } };
     });
   }
@@ -204,11 +202,12 @@ export default function WalkTrackerApp() {
           </label>
         </div>
 
-        {/* 상단: 초복이 사진 + 멘트 */}
+        {/* 상단: 초복이 사진 + 멘트 (사진 더 크게, 반응형) */}
         <div className="mb-4 flex flex-col items-center">
           <div
-            className="w-32 h-32 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2"
+            className="rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2"
             aria-label="초복이"
+            style={{ width: "clamp(140px, 38vw, 192px)", height: "clamp(140px, 38vw, 192px)" }}
           >
             {dogImages[photoGroup] ? (
               <img
@@ -217,7 +216,7 @@ export default function WalkTrackerApp() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <DogFallbackIcon />
+              <DogFallbackIcon size={160} />
             )}
           </div>
           <div className="text-slate-700 font-semibold text-center">
@@ -346,9 +345,10 @@ export default function WalkTrackerApp() {
                     data={data}
                     goal={8000}
                     themeColor={themeColor}
-                    onToggleRainIfGrey={toggleRainIfGrey}
-                    onToggleExcluded={toggleExcludedSafe}
+                    onToggleRain={toggleRain}
+                    onToggleExcluded={toggleExcluded}
                     cellWidth="2rem"
+                    todayKey={todayKey}
                   />
                 </div>
               )}
@@ -392,8 +392,9 @@ export default function WalkTrackerApp() {
                   data={data}
                   goal={8000}
                   themeColor={themeColor}
-                  onToggleRainIfGrey={toggleRainIfGrey}
-                  onToggleExcluded={toggleExcludedSafe}
+                  onToggleRain={toggleRain}
+                  onToggleExcluded={toggleExcluded}
+                  todayKey={todayKey}
                 />
               ))}
             </div>
@@ -409,8 +410,9 @@ export default function WalkTrackerApp() {
                   data={data}
                   goal={8000}
                   themeColor={themeColor}
-                  onToggleRainIfGrey={toggleRainIfGrey}
-                  onToggleExcluded={toggleExcludedSafe}
+                  onToggleRain={toggleRain}
+                  onToggleExcluded={toggleExcluded}
+                  todayKey={todayKey}
                 />
               ))}
             </div>
@@ -426,8 +428,9 @@ export default function WalkTrackerApp() {
                   data={data}
                   goal={8000}
                   themeColor={themeColor}
-                  onToggleRainIfGrey={toggleRainIfGrey}
-                  onToggleExcluded={toggleExcludedSafe}
+                  onToggleRain={toggleRain}
+                  onToggleExcluded={toggleExcluded}
+                  todayKey={todayKey}
                 />
               ))}
             </div>
@@ -449,37 +452,45 @@ function BlockCell({
   data,
   goal,
   themeColor,
-  onToggleRainIfGrey,
+  onToggleRain,
   onToggleExcluded,
   cellWidth,
+  todayKey,
 }) {
   if (n > maxDay) return null; // 존재하지 않는 날짜 칸은 생성하지 않음
   const date = new Date(y, m, n);
   const key = fmt(date);
   const item = data[key] || {};
+  const s = item.steps || 0;
   const color = dayClass(item, goal, themeColor);
 
-  const achieved = !item.excluded && (item.steps || 0) >= goal;
-  const isDouble = !item.excluded && (item.steps || 0) >= goal * 2;
-  const isGrey = !item.excluded && (item.steps || 0) < goal;
-  const iconSize = isDouble ? 26 : 22; // 발바닥 기본 크게, 2배는 더 크게
+  const achieved = !item.excluded && s >= goal;
+  const isDouble = !item.excluded && s >= goal * 2;
+  const isPartial = !item.excluded && s >= 4000 && s < goal;
+  const isToday = key === todayKey;
 
-  // 제스처: 달성일은 임의 변경 불가
+  // 제스처: 길게 눌러 제외, 더블탭 비
   const timerRef = useRef(null);
   const down = () => {
-    if (achieved) return;
     timerRef.current = setTimeout(() => onToggleExcluded(key), 500);
   };
   const up = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   };
   const dbl = () => {
-    if (isGrey) onToggleRainIfGrey(key);
+    onToggleRain(key);
   };
 
-  const label = `${key} · ${item.excluded ? "제외" : isDouble ? "2배 달성" : achieved ? "달성" : "미달"}${
-    isGrey && item.rain ? " · 비" : ""
-  }`;
+  const label =
+    `${key} · ` +
+    (item.excluded ? "제외" : isDouble ? "2배 달성" : achieved ? "달성" : isPartial ? "부분 달성" : "미달") +
+    (item.rain ? " · 비" : "") +
+    (isToday ? " · 오늘" : "");
+
+  // 오늘 하이라이트 스타일: 테마색 링 + 은은한 오라 (레이아웃 영향 없음)
+  const ringShadow = isToday && !item.excluded
+    ? `0 0 0 2px ${themeColor}, 0 0 0 6px ${hexToRgba(themeColor, 0.22)}`
+    : undefined;
 
   return (
     <div
@@ -488,19 +499,24 @@ function BlockCell({
       onPointerLeave={up}
       onDoubleClick={dbl}
       className="relative h-8 rounded flex items-center justify-center text-[12px] select-none"
-      style={{ backgroundColor: color, color: "white", width: cellWidth || undefined }}
+      style={{ backgroundColor: color, color: "white", width: cellWidth || undefined, boxShadow: ringShadow }}
       title={label}
       aria-label={label}
     >
       {item.excluded ? (
-        <ExcludeIcon size={iconSize} />
+        <ExcludeIcon size={22} />
       ) : achieved ? (
-        <PawIcon size={iconSize} />
-      ) : isGrey && item.rain ? (
-        <RainCancelIcon size={iconSize} />
+        <PawIcon size={isDouble ? 26 : 22} />
       ) : (
         n
       )}
+
+      {/* 비 배지: 제외가 아닌 모든 상태에서 표시 가능 (사이즈 확대) */}
+      {!item.excluded && item.rain ? (
+        <div className="absolute top-[1px] left-[1px]">
+          <RainCancelIcon size={18} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -511,6 +527,7 @@ function dayClass(item, goal, themeColor) {
   const s = item.steps || 0;
   if (s >= goal * 2) return darkenHex(themeColor, 0.7); // 2배: 테마색 진하게
   if (s >= goal) return themeColor; // 달성: 테마색
+  if (s >= 4000) return lightenHex(themeColor, 0.55); // 부분 달성: 옅은 톤
   return "#cbd5e1"; // 미달: 밝은 회색
 }
 
@@ -523,6 +540,37 @@ function darkenHex(hex, factor = 0.8) {
     const b = Math.round(parseInt(h.slice(4, 6), 16) * factor);
     const to2 = (n) => n.toString(16).padStart(2, "0");
     return `#${to2(r)}${to2(g)}${to2(b)}`;
+  } catch (e) {
+    return hex;
+  }
+}
+
+function lightenHex(hex, factor = 0.5) {
+  try {
+    let h = hex.replace("#", "");
+    if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    const lr = Math.round(r + (255 - r) * factor);
+    const lg = Math.round(g + (255 - g) * factor);
+    const lb = Math.round(b + (255 - b) * factor);
+    const to2 = (n) => n.toString(16).padStart(2, "0");
+    return `#${to2(lr)}${to2(lg)}${to2(lb)}`;
+  } catch (e) {
+    return hex;
+  }
+}
+
+// hex → rgba(a) 유틸
+function hexToRgba(hex, a = 1) {
+  try {
+    let h = hex.replace("#", "");
+    if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
   } catch (e) {
     return hex;
   }
@@ -584,7 +632,7 @@ function DogFallbackIcon({ size = 64 }) {
       <circle cx="24" cy="28" r="6" fill="#fff"/>
       <circle cx="40" cy="28" r="6" fill="#fff"/>
       <circle cx="24" cy="28" r="3" fill="#111"/>
-      <circle cx="40" cy="28" r="3" fill="#111"/>
+      <circle cx="40" cy="28 r="3" fill="#111"/>
       <path d="M24 44 q8 6 16 0" stroke="#111" strokeWidth="3" fill="none" strokeLinecap="round"/>
       <path d="M14 18 q6 -10 14 -2" stroke="#d97706" strokeWidth="6" strokeLinecap="round"/>
       <path d="M50 18 q-6 -10 -14 -2" stroke="#d97706" strokeWidth="6" strokeLinecap="round"/>
@@ -605,7 +653,7 @@ function LegendOneLine({ themeColor }){
         <span className="w-6 h-3 rounded inline-block border border-slate-300 bg-white"></span>제외 (길게)
       </span>
       <span className="inline-flex items-center gap-1">
-        <RainCancelIcon size={14} />비 (더블탭)
+        <RainCancelIcon size={16} />비 (더블탭)
       </span>
     </div>
   );

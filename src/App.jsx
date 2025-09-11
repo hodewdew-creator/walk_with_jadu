@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState, forwardRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-/** 파일: src/App.jsx — 오늘 걸음 원 + 월간 3~4층 블럭(31일은 4층, 21 위) + 테스트 입력 + 광고 + 고지문 */
+/** 파일: src/App.jsx — 오늘 걸음 원 + 월간 3~4층 블럭(31일은 4층, 21 위) + 테스트 입력 (광고/고지문 제거 버전) */
 
 // 로컬 날짜 키(UTC 오프셋 이슈 방지)
 const fmt = (d) => {
@@ -25,18 +25,6 @@ export default function WalkTrackerApp() {
   const [viewDate, setViewDate] = useState(() => { const d = new Date(); d.setHours(0,0,0,0); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [data, setData] = useState({});
   const [themeColor, setThemeColor] = useState("#38bdf8");
-
-  // 하단 고정 광고 높이 측정 → 본문 패딩 보정(세로 스크롤 방지)
-  const footerRef = useRef(null);
-  const [footerH, setFooterH] = useState(100);
-  useEffect(() => {
-    const measure = () => setFooterH(footerRef.current?.offsetHeight || 100);
-    measure();
-    const onR = () => measure();
-    window.addEventListener("resize", onR);
-    const id = setInterval(measure, 500);
-    return () => { window.removeEventListener("resize", onR); clearInterval(id); };
-  }, []);
 
   // 테스트 입력 패널
   const [editOpen, setEditOpen] = useState(false);
@@ -159,62 +147,46 @@ export default function WalkTrackerApp() {
     Array.from({ length: 10 }, (_, i) => i + 21),  // 21~30
   ];
 
-return (
-  <div className="min-h-screen" style={{ background: themeColor + "10" }}>
-    <div
-      className="max-w-sm mx-auto p-5 flex flex-col items-center relative"
-      style={{ paddingBottom: (footerH + 10) + "px" }}
-    >
+  return (
+    <div className="min-h-screen" style={{ background: themeColor + "10" }}>
+      <div
+        className="max-w-sm mx-auto p-5 flex flex-col items-center relative"
+        style={{ paddingBottom: "10px" }}  // 하단 광고 제거 → 여유 패딩만 유지
+      >
 
-{/* 🅲 쿠팡 버튼 + 🎨 팔레트 버튼 */}
-<div className="absolute top-3 right-3 flex items-center gap-3">
-  {/* 쿠팡 페이지 버튼 (왼쪽) */}
-  <button
-    className="text-2xl leading-none"
-    title="쿠팡 광고 페이지"
-    onClick={() => {
-      // 공개용: 새 탭으로 열기
-      window.open("https://walk-with-jadu-coup.vercel.app/", "_blank", "noopener,noreferrer");
-      // 같은 탭 이동을 원하면 위 한 줄 대신 아래 사용
-      // window.location.href = "https://walk-with-jadu-coup.vercel.app/";
-    }}
-  >
-    🅲
-  </button>
-
-  {/* 팔레트 버튼 (오른쪽) */}
-  <label className="cursor-pointer" title="테마 색 변경">
-    🎨
-    <input
-      type="color"
-      value={themeColor}
-      onChange={(e) => setThemeColor(e.target.value)}
-      className="opacity-0 w-0 h-0"
-    />
-  </label>
-</div>
-
-      {/* 상단: 초복이 사진 + 멘트 */}
-      <div className="mb-4 flex flex-col items-center">
-        <div
-          className="w-32 h-32 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2"
-          aria-label="초복이"
-        >
-          {dogImages[photoGroup] ? (
-            <img
-              src={dogImages[photoGroup]}
-              alt="초복이"
-              className="w-full h-full object-cover"
+        {/* 🎨 팔레트 버튼만 유지 */}
+        <div className="absolute top-3 right-3 flex items-center gap-3">
+          <label className="cursor-pointer" title="테마 색 변경">
+            🎨
+            <input
+              type="color"
+              value={themeColor}
+              onChange={(e) => setThemeColor(e.target.value)}
+              className="opacity-0 w-0 h-0"
             />
-          ) : (
-            <DogFallbackIcon />
-          )}
+          </label>
         </div>
-        <div className="text-slate-700 font-semibold text-center">
-          {messages[msgIndex]}
-        </div>
-      </div>
 
+        {/* 상단: 초복이 사진 + 멘트 */}
+        <div className="mb-4 flex flex-col items-center">
+          <div
+            className="w-32 h-32 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2"
+            aria-label="초복이"
+          >
+            {dogImages[photoGroup] ? (
+              <img
+                src={dogImages[photoGroup]}
+                alt="초복이"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <DogFallbackIcon />
+            )}
+          </div>
+          <div className="text-slate-700 font-semibold text-center">
+            {messages[msgIndex]}
+          </div>
+        </div>
 
         {/* 메인 원 */}
         <div className="relative rounded-full bg-white shadow-md flex flex-col items-center justify-center mb-3"
@@ -302,9 +274,6 @@ return (
           <Legend themeColor={themeColor} />
         </section>
       </div>
-      
-      {/* 하단 고정: 쿠팡 파트너스 배너 + 고지문 */}
-      <CoupangAd ref={footerRef} />
     </div>
   );
 }
@@ -472,14 +441,5 @@ function Legend({ themeColor }){
   );
 }
 
-const CoupangAd = forwardRef(function CoupangAd(_, ref){
-  return (
-    <div ref={ref} className="fixed bottom-0 left-0 right-0 z-10 bg-white/95 border-t border-slate-200">
-      {/* 광고 프레임 (320x60 비율) */}
-
-      
-    </div>
-  );
-});
 
 

@@ -14,5 +14,7 @@
   },
   "devDependencies": {
     "vite": "^5.0.0"
+  }  "scripts": {
+    "photos:manifest": "node scripts/build-photo-manifest.mjs"
   }
 }

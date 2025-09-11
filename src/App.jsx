@@ -64,6 +64,9 @@ export default function App() {
 
   // 월간 요약 팝업
   const [summaryOpen, setSummaryOpen] = useState(false);
+  // 네이티브(AndroidSteps) 가용성
+  const [nativeAvailable, setNativeAvailable] = useState(false);
+
 
   // 로드/저장 (localStorage)
   useEffect(() => {
@@ -102,6 +105,67 @@ export default function App() {
   useEffect(() => {
     loadPhotosManifest().then(setPhotosManifest).catch(() => {});
   }, []);
+  // 네이티브 감지 + 권한 요청
+  useEffect(() => {
+    const hasNative = typeof window !== 'undefined' && !!window.AndroidSteps;
+    setNativeAvailable(hasNative);
+    if (hasNative) {
+      try { window.AndroidSteps.requestPermissions && window.AndroidSteps.requestPermissions(); } catch {}
+    }
+  }, []);
+
+  // 네이티브 → JS 콜백 등록
+  useEffect(() => {
+    // 오늘 합계
+    window.__onTodaySteps = ({ steps }) => {
+      const n = Number(steps) || 0;
+      setData((p) => {
+        const prev = p[todayKey] || {};
+        const merged = Math.max(prev.steps || 0, n);
+        return { ...p, [todayKey]: { ...prev, steps: merged } };
+      });
+    };
+    // 월별 일자 합계
+    window.__onMonthSteps = ({ days }) => {
+      if (!Array.isArray(days)) return;
+      setData((p) => {
+        const next = { ...p };
+        for (const item of days) {
+          const date = String(item.date || "");
+          const s = Number(item.steps) || 0;
+          if (!date) continue;
+          const prev = next[date] || {};
+          next[date] = { ...prev, steps: Math.max(prev.steps || 0, s) };
+        }
+        return next;
+      });
+    };
+    // 권한 직후 훅
+    window.__onHealthPerm = () => {
+      try {
+        window.AndroidSteps?.getToday?.();
+        window.AndroidSteps?.getMonth?.(vy, vm + 1);
+      } catch {}
+    };
+    return () => {
+      delete window.__onTodaySteps;
+      delete window.__onMonthSteps;
+      delete window.__onHealthPerm;
+    };
+  }, [todayKey, vy, vm]);
+
+  // 오늘값 갱신 트리거
+  useEffect(() => {
+    if (!nativeAvailable) return;
+    try { window.AndroidSteps?.getToday?.(); } catch {}
+  }, [todayKey, nativeAvailable]);
+
+  // 월 전환 시 일별 갱신
+  useEffect(() => {
+    if (!nativeAvailable) return;
+    try { window.AndroidSteps?.getMonth?.(vy, vm + 1); } catch {}
+  }, [vy, vm, nativeAvailable]);
+
 
   // 메시지 자동 회전
   useEffect(() => {
@@ -148,6 +212,7 @@ export default function App() {
   const [tmpSteps, setTmpSteps] = useState("");
 
   function openEditor() {
+    if (nativeAvailable) return;
     const inView = today.getFullYear() === vy && today.getMonth() === vm;
     const base = inView ? today : new Date(vy, vm, 1);
     const k = fmt(base);
@@ -254,6 +319,7 @@ export default function App() {
             border: `6px solid ${themeColor}`
           }}
         >
+          {!nativeAvailable && (
           <button
             onClick={openEditor}
             className="absolute top-2 right-2 text-[11px] px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200"
@@ -262,6 +328,7 @@ export default function App() {
           >
             ✏️
           </button>
+          )}
 
           <div className="text-5xl font-extrabold text-slate-800">
             {typeof t.steps === "number" ? t.steps.toLocaleString() : 0}
@@ -270,7 +337,7 @@ export default function App() {
         </div>
 
         {/* ▶ 수동 입력 패널 */}
-        {editOpen && (
+        {editOpen && !nativeAvailable && (
           <div className="w-full mb-4 p-3 rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="text-[11px] text-slate-500 mb-2">테스트용 수동 입력 (어떤 날짜든 가능)</div>
             <div className="grid grid-cols-3 gap-3 items-end mb-3">
@@ -738,3 +805,4 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+

@@ -67,6 +67,16 @@ export default function App() {
   // 네이티브(AndroidSteps) 가용성
   const [nativeAvailable, setNativeAvailable] = useState(false);
 
+  // 보이는 달/오늘 키 등 계산 (effects보다 위에 두어 TDZ 방지)
+  const vy = viewDate.getFullYear();
+  const vm = viewDate.getMonth();
+  const daysInMonth = new Date(vy, vm + 1, 0).getDate();
+  const has31 = daysInMonth === 31;
+
+  const todayKey = fmt(today);
+  const t = data[todayKey] || {};
+  const todaySteps = Math.max(0, t.steps || 0);
+
 
   // 로드/저장 (localStorage)
   useEffect(() => {
@@ -104,7 +114,7 @@ export default function App() {
   // 사진 manifest 로드
   useEffect(() => {
     loadPhotosManifest().then(setPhotosManifest).catch(() => {});
-  }, []);
+  }, []
   // 네이티브 감지 + 권한 요청
   useEffect(() => {
     const hasNative = typeof window !== 'undefined' && !!window.AndroidSteps;
@@ -116,7 +126,6 @@ export default function App() {
 
   // 네이티브 → JS 콜백 등록
   useEffect(() => {
-    // 오늘 합계
     window.__onTodaySteps = ({ steps }) => {
       const n = Number(steps) || 0;
       setData((p) => {
@@ -125,7 +134,6 @@ export default function App() {
         return { ...p, [todayKey]: { ...prev, steps: merged } };
       });
     };
-    // 월별 일자 합계
     window.__onMonthSteps = ({ days }) => {
       if (!Array.isArray(days)) return;
       setData((p) => {
@@ -140,7 +148,6 @@ export default function App() {
         return next;
       });
     };
-    // 권한 직후 훅
     window.__onHealthPerm = () => {
       try {
         window.AndroidSteps?.getToday?.();
@@ -165,7 +172,7 @@ export default function App() {
     if (!nativeAvailable) return;
     try { window.AndroidSteps?.getMonth?.(vy, vm + 1); } catch {}
   }, [vy, vm, nativeAvailable]);
-
+);
 
   // 메시지 자동 회전
   useEffect(() => {
@@ -178,16 +185,6 @@ export default function App() {
     };
   }, [autoRotateMsg, messages.length]);
 
-  // 보이는 달 계산
-  const vy = viewDate.getFullYear();
-  const vm = viewDate.getMonth();
-  const daysInMonth = new Date(vy, vm + 1, 0).getDate();
-  const has31 = daysInMonth === 31;
-
-  // 오늘 상태
-  const todayKey = fmt(today);
-  const t = data[todayKey] || {};
-  const todaySteps = Math.max(0, t.steps || 0);
 
   // 월 이동
   const shiftMonth = (base, diff) => new Date(base.getFullYear(), base.getMonth() + diff, 1);
@@ -805,4 +802,3 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
-

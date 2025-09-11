@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+
 /** 파일: src/App.jsx — UI 수정 3차
  *  - '오늘' 블록 강조(테마색 링 + 오라) 추가
  *  - 비 배지(빗방울) 아이콘 크기 확대
@@ -48,9 +49,14 @@ export default function WalkTrackerApp() {
   const [tmpFloors, setTmpFloors] = useState("");
 
   // 멘트 + 1분마다 갱신
-const autoRotateMsg = true;
-  const [messages] = useState(messagesKO);
-  const [msgIndex, setMsgIndex] = useState(() => Math.floor(Math.random() * messages.length));
+  const autoRotateMsg = true;
+  // 외부 JSON에서 로드 + 안전한 폴백
+  const DEFAULT_MESSAGES = [
+    "산책 좋아요 🐾", "마음도 산책 중", "오늘도 화이팅!", "초복이와 함께", "바람이 상쾌해요"
+  ];
+  const messagesSrc = Array.isArray(messagesKO) && messagesKO.length ? messagesKO : DEFAULT_MESSAGES;
+  const [messages] = useState(messagesSrc);
+  const [msgIndex, setMsgIndex] = useState(() => Math.floor(Math.random()*Math.max(1, messages.length)))
   const msgTimer = useRef(null);
   useEffect(() => {
     if (!autoRotateMsg) return;
@@ -75,6 +81,28 @@ const autoRotateMsg = true;
   useEffect(() => {
     localStorage.setItem(STORE_KEY, JSON.stringify({ data, themeColor }));
   }, [data, themeColor]);
+
+  
+  // 외부 메시지 로드 (public/messages_ko.json)
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch("/messages_ko.json", { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const arr = await res.json();
+        if (alive && Array.isArray(arr) && arr.length) {
+          setMessages(arr);
+          // messages 갱신 후 현재 인덱스가 범위를 벗어나지 않도록 보정
+          setMsgIndex((i) => i % arr.length);
+        }
+      } catch (e) {
+        // 실패 시 DEFAULT_MESSAGES 유지
+        console.warn("messages_ko.json load failed:", e);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   // 보이는 달 계산값
   const vy = viewDate.getFullYear();
@@ -638,4 +666,5 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+
 

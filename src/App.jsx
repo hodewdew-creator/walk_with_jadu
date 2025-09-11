@@ -152,17 +152,14 @@ export default function WalkTrackerApp() {
   const [editOpen, setEditOpen] = useState(false);
   const [tmpDate, setTmpDate] = useState("");
   const [tmpSteps, setTmpSteps] = useState("");
-  const [tmpFloors, setTmpFloors] = useState("");
-
-  function openEditor() {
+function openEditor() {
     const inView = today.getFullYear() === vy && today.getMonth() === vm;
     const base = inView ? today : new Date(vy, vm, 1);
     const k = fmt(base);
     const it = data[k] || {};
     setTmpDate(k);
     setTmpSteps(String(it.steps ?? 0));
-    setTmpFloors(String(it.floors ?? 0));
-    setEditOpen(true);
+setEditOpen(true);
   }
   function onChangeEditorDate(v) {
     if (!v) return;
@@ -170,13 +167,12 @@ export default function WalkTrackerApp() {
     setTmpDate(v);
     const it = data[v] || {};
     setTmpSteps(String(it.steps ?? 0));
-    setTmpFloors(String(it.floors ?? 0));
-  }
+}
   function saveEditor() {
     const key = tmpDate && tmpDate >= monthStart && tmpDate <= monthEnd ? tmpDate : monthStart;
     const s = Math.max(0, parseInt(tmpSteps || "0", 10) || 0);
     const f = Math.max(0, parseInt(tmpFloors || "0", 10) || 0);
-    setData((p) => ({ ...p, [key]: { ...(p[key] || {}), steps: s, floors: f } }));
+    setData((p) => ({ ...p, [key]: { ...(p[key] || {}), steps: s } }));
     setEditOpen(false);
   }
 
@@ -260,10 +256,7 @@ export default function WalkTrackerApp() {
             {typeof t.steps === "number" ? t.steps.toLocaleString() : 0}
           </div>
           <div className="text-slate-500 text-sm mt-1">걸음수</div>
-          <div className="absolute bottom-4 text-slate-400 text-xs">
-            층수: {t.floors || 0}
-          </div>
-        </div>
+</div>
 
         {/* ▶ 테스트용 수동 입력 패널 */}
         {editOpen && (
@@ -291,7 +284,7 @@ export default function WalkTrackerApp() {
                 오늘
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <label className="text-sm text-slate-700">
                 걸음수
                 <input
@@ -302,17 +295,7 @@ export default function WalkTrackerApp() {
                   onChange={(e) => setTmpSteps(e.target.value)}
                 />
               </label>
-              <label className="text-sm text-slate-700">
-                층수
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  className="mt-1 w-full px-2 py-1 border rounded"
-                  value={tmpFloors}
-                  onChange={(e) => setTmpFloors(e.target.value)}
-                />
-              </label>
-            </div>
+</div>
             <div className="flex flex-wrap gap-2 mt-2">
               {[0, 5000, 8000, 16000].map((v) => (
                 <button
@@ -657,5 +640,3 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
-
-

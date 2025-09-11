@@ -730,10 +730,10 @@ function LegendOneLine({ themeColor }){
         <span className="w-6 h-3 rounded inline-block" style={{ backgroundColor: darkenHex(themeColor,0.7) }}></span>2배달성
       </span>
       <span className="inline-flex items-center gap-1">
-        <span className="w-6 h-3 rounded inline-block border border-slate-300 bg-white"></span>제외 (길게)
+        <span className="w-6 h-3 rounded inline-block border border-slate-300 bg-white"></span>X(길게)
       </span>
       <span className="inline-flex items-center gap-1">
-        <RainCancelIcon size={16} />비 (더블탭)
+        <RainCancelIcon size={16} />비(더블탭)
       </span>
     </div>
   );

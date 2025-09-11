@@ -224,9 +224,9 @@ export default function App() {
         {/* 상단: 사진 + 멘트 */}
         <div className="mb-4 flex flex-col items-center">
           <div
-            className="rounded-2xl bg-slate-200 overflow-hidden flex items-center justify-center mb-2"
+            className="rounded-full bg-slate-200 overflow-hidden flex items-center justify-center mb-2 ring-2 ring-white shadow"
             aria-label="초복이"
-            style={{ width: "clamp(140px, 38vw, 192px)", height: "clamp(140px, 38vw, 192px)" }}
+            style={{ width: "clamp(160px, 50vw, 240px)", height: "clamp(160px, 50vw, 240px)" }}
           >
             {todayPhoto ? (
               <img

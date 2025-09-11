@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-/** 파일: src/App.jsx — 팔레트 옆 'C' 이모티콘 링크 (https://walk-with-jadu-coup.vercel.app) / 하단 광고 제거 */
+/** 파일: src/App.jsx — 팔레트 옆 '🅲' 이모티콘 링크 (https://walk-with-jadu-coup.vercel.app) / 하단 광고 제거 */
 
 const COUPANG_URL = "https://walk-with-jadu-coup.vercel.app";
 
@@ -105,7 +105,7 @@ export default function WalkTrackerApp() {
     });
   }
 
-  // 제외 토글(달성 상태에선 동작 금지) → 블랙 X 아이콘
+  // 제외 토글(달성 상태에선 동작 금지)
   function toggleExcludedSafe(key) {
     setData((p) => {
       const it = p[key] || {};
@@ -144,19 +144,16 @@ export default function WalkTrackerApp() {
 
   // 3층(1~30) + 4층(31) 구성
   const rows = [
-    Array.from({ length: 10 }, (_, i) => i + 1),   // 1~10
-    Array.from({ length: 10 }, (_, i) => i + 11),  // 11~20
-    Array.from({ length: 10 }, (_, i) => i + 21),  // 21~30
+    Array.from({ length: 10 }, (_, i) => i + 1),
+    Array.from({ length: 10 }, (_, i) => i + 11),
+    Array.from({ length: 10 }, (_, i) => i + 21),
   ];
 
   return (
     <div className="min-h-screen" style={{ background: themeColor + "10" }}>
-      <div
-        className="max-w-sm mx-auto p-5 flex flex-col items-center relative"
-        style={{ paddingBottom: "10px" }}  // 하단 광고 제거 → 여유 패딩만 유지
-      >
-
-        {/* 🎨 팔레트 + C 이모티콘 링크 */}
+      <div className="max-w-sm mx-auto p-5 flex flex-col items-center relative" style={{ paddingBottom: "10px" }}>
+        
+        {/* 🎨 팔레트 + 🅲 링크 */}
         <div className="absolute top-3 right-3 flex items-center gap-3">
           <a
             href={COUPANG_URL}
@@ -166,7 +163,7 @@ export default function WalkTrackerApp() {
             title="쿠팡 링크"
             aria-label="쿠팡 링크"
           >
-            C
+            🅲
           </a>
           <label className="cursor-pointer" title="테마 색 변경">
             🎨
@@ -181,16 +178,9 @@ export default function WalkTrackerApp() {
 
         {/* 상단: 초복이 사진 + 멘트 */}
         <div className="mb-4 flex flex-col items-center">
-          <div
-            className="w-32 h-32 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2"
-            aria-label="초복이"
-          >
+          <div className="w-32 h-32 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-6xl mb-2" aria-label="초복이">
             {dogImages[photoGroup] ? (
-              <img
-                src={dogImages[photoGroup]}
-                alt="초복이"
-                className="w-full h-full object-cover"
-              />
+              <img src={dogImages[photoGroup]} alt="초복이" className="w-full h-full object-cover" />
             ) : (
               <DogFallbackIcon />
             )}
@@ -200,12 +190,32 @@ export default function WalkTrackerApp() {
           </div>
         </div>
 
-        {/* 이하 내용 동일 (생략)… */}
+        {/* 메인 원 */}
+        <div className="relative rounded-full bg-white shadow-md flex flex-col items-center justify-center mb-3"
+             style={{ width: "clamp(200px, 56vw, 256px)", height: "clamp(200px, 56vw, 256px)", border: `6px solid ${themeColor}` }}>
+          <button onClick={openEditor} className="absolute top-2 right-2 text-[11px] px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200">✏️</button>
+          <div className="text-5xl font-extrabold text-slate-800">{typeof t.steps === 'number' ? t.steps.toLocaleString() : 0}</div>
+          <div className="text-slate-500 text-sm mt-1">걸음수</div>
+          <div className="absolute bottom-4 text-slate-400 text-xs">층수: {t.floors || 0}</div>
+        </div>
+
+        {/* 이하: 수동 입력, 달력, Legend … (기존 코드 동일) */}
       </div>
     </div>
   );
 }
 
-
-
-
+function DogFallbackIcon({ size = 64 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="30" fill="#fde68a" />
+      <circle cx="24" cy="28" r="6" fill="#fff"/>
+      <circle cx="40" cy="28" r="6" fill="#fff"/>
+      <circle cx="24" cy="28" r="3" fill="#111"/>
+      <circle cx="40" cy="28" r="3" fill="#111"/>
+      <path d="M24 44 q8 6 16 0" stroke="#111" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <path d="M14 18 q6 -10 14 -2" stroke="#d97706" strokeWidth="6" strokeLinecap="round"/>
+      <path d="M50 18 q-6 -10 -14 -2" stroke="#d97706" strokeWidth="6" strokeLinecap="round"/>
+    </svg>
+  );
+}

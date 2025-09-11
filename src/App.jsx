@@ -169,10 +169,14 @@ setEditOpen(true);
     setTmpSteps(String(it.steps ?? 0));
 }
   function saveEditor() {
-    const key = tmpDate && tmpDate >= monthStart && tmpDate <= monthEnd ? tmpDate : monthStart;
+    const d = new Date(tmpDate);
+    if (!tmpDate || isNaN(d)) { setEditOpen(false); return; }
+    d.setHours(0,0,0,0);
+    const key = fmt(d);
     const s = Math.max(0, parseInt(tmpSteps || "0", 10) || 0);
-    const f = Math.max(0, parseInt(tmpFloors || "0", 10) || 0);
     setData((p) => ({ ...p, [key]: { ...(p[key] || {}), steps: s } }));
+    setEditOpen(false);
+  }), steps: s } }));
     setEditOpen(false);
   }
 
@@ -270,8 +274,6 @@ setEditOpen(true);
                 <input
                   type="date"
                   className="mt-1 w-full px-2 py-1 border rounded"
-                  min={monthStart}
-                  max={monthEnd}
                   value={tmpDate}
                   onChange={(e) => onChangeEditorDate(e.target.value)}
                 />

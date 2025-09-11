@@ -97,7 +97,8 @@ export default function App() {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch("/messages_ko.json", { cache: "no-store" });
+ const base = location.protocol === "file:" ? "" : "/";
+ const res = await fetch(`${base}messages_ko.json`, { cache: "no-store" });
         if (!res.ok) return;
         const arr = await res.json();
         if (alive && Array.isArray(arr) && arr.length) {

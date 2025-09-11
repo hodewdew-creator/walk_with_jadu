@@ -50,6 +50,9 @@ export default function WalkTrackerApp() {
   const [data, setData] = useState({});
   const [themeColor, setThemeColor] = useState("#38bdf8");
 
+  // 월간 요약 팝업
+  const [summaryOpen, setSummaryOpen] = useState(false);
+
   // 상단 멘트
   const autoRotateMsg = true;
   const DEFAULT_MESSAGES = [
@@ -199,6 +202,33 @@ export default function WalkTrackerApp() {
       <div className="max-w-sm mx-auto p-5 flex flex-col items-center relative" style={{ paddingBottom: "10px" }}>
         {/* 🎨 팔레트 + 🅲 링크 */}
         <div className="absolute top-3 right-3 flex items-center gap-3">
+          <a
+            href={COUPANG_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-lg hover:opacity-80"
+            title="쿠팡 링크"
+            aria-label="쿠팡 링크"
+          >
+            🅲
+          </a>
+          <label className="cursor-pointer" title="테마 색 변경">
+            🎨
+            <input
+              type="color"
+              value={themeColor}
+              onChange={(e) => setThemeColor(e.target.value)}
+              className="opacity-0 w-0 h-0"
+            />
+          </label>
+          <button
+            onClick={() => setSummaryOpen(true)}
+            className="text-lg hover:opacity-80"
+            title="월간 요약 보기"
+            aria-label="월간 요약 보기"
+          >
+            📊
+          </button>
           <a
             href={COUPANG_URL}
             target="_blank"
@@ -408,6 +438,122 @@ export default function WalkTrackerApp() {
           {/* 범례 한 줄 */}
           <LegendOneLine themeColor={themeColor} />
         </section>
+        {/* 월간 요약 팝업 */}
+        {summaryOpen && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setSummaryOpen(false)}>
+            <div
+              className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold text-slate-800">이번 달 한눈에 보기</div>
+                <button
+                  onClick={() => setSummaryOpen(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                  aria-label="닫기"
+                >✕</button>
+              </div>
+
+              {/* 요약 수치 계산 */}
+              {(() => {
+                const days = new Date(vy, vm + 1, 0).getDate();
+                const goal = 8000;
+                let total = 0, daysWith = 0, achieved = 0, doubled = 0, partial = 0, excluded = 0, rain = 0, maxS = 0, maxD = null;
+                let longestStreak = 0, rollingStreak = 0;
+                const series = [];
+                for (let d = 1; d <= days; d++) {
+                  const k = fmt(new Date(vy, vm, d));
+                  const it = data[k] || {};
+                  const s = it.steps || 0;
+                  series.push({ d, s });
+                  if (it.excluded) { excluded++; rollingStreak = 0; }
+                  else if (s >= goal) { rollingStreak++; if (rollingStreak > longestStreak) longestStreak = rollingStreak; }
+                  else { rollingStreak = 0; }
+                  if (it.rain) rain++;
+                  if (!it.excluded) {
+                    total += s;
+                    if (s > 0) daysWith++;
+                    if (s >= goal * 2) doubled++;
+                    else if (s >= goal) achieved++;
+                    else if (s >= 4000) partial++;
+                  }
+                  if (s > maxS) { maxS = s; maxD = d; }
+                }
+                const avg = daysWith ? Math.round(total / daysWith) : 0;
+                const maxVal = Math.max(1, ...series.map(v => v.s));
+
+                const consideredDays = days;
+                const achievedTotal = achieved + doubled;
+                const rate = consideredDays ? Math.round((achievedTotal / consideredDays) * 100) : 0;
+
+                // 현재 연속 달성(월 말부터 거꾸로 확인, 제외는 건너뜀)
+                let currentStreak = 0;
+                for (let d = days; d >= 1; d--) {
+                  const k = fmt(new Date(vy, vm, d));
+                  const it = data[k] || {};
+                  const s = it.steps || 0;
+                  if (it.excluded) break;
+                  if (s >= goal) currentStreak++;
+                  else break;
+                }
+
+                return (
+                  <div>
+                    <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                      <div className="p-2 rounded-lg bg-slate-50 border">
+                        <div className="text-[11px] text-slate-500">총 걸음수</div>
+                        <div className="font-bold text-slate-800">{total.toLocaleString()} 보</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-50 border">
+                        <div className="text-[11px] text-slate-500">평균(데이터 있는 날)</div>
+                        <div className="font-bold text-slate-800">{avg.toLocaleString()} 보</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-50 border">
+                        <div className="text-[11px] text-slate-500">달성 / 2배</div>
+                        <div className="font-bold text-slate-800">{achieved} / {doubled}</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-50 border">
+                        <div className="text-[11px] text-slate-500">부분 / 제외 / 비</div>
+                        <div className="font-bold text-slate-800">{partial} / {excluded} / {rain}</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-50 border">
+                        <div className="text-[11px] text-slate-500">월 목표 달성률</div>
+                        <div className="font-bold text-slate-800">{achievedTotal} / {consideredDays} ({rate}%)</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-50 border">
+                        <div className="text-[11px] text-slate-500">연속 달성</div>
+                        <div className="font-bold text-slate-800">현재 {currentStreak}일 / 최대 {longestStreak}일</div>
+                      </div>
+                      <div className="p-2 rounded-lg bg-slate-50 border col-span-2">
+                        <div className="text-[11px] text-slate-500">최고 기록</div>
+                        <div className="font-bold text-slate-800">{maxS.toLocaleString()} 보 {maxD ? `(${vy}.${vm+1}.${maxD})` : ""}</div>
+                      </div>
+                    </div>
+
+                    {/* 간이 막대 그래프 (CSS만) */}
+                    <div className="h-24 w-full flex items-end gap-[3px] mb-2">
+                      {series.map(({ d, s }) => {
+                        const h = Math.round((s / maxVal) * 90) + 8; // 8~98px
+                        const bg =
+                          s >= goal * 2 ? darkenHex(themeColor, 0.7) :
+                          s >= goal ? themeColor :
+                          s >= 4000 ? lightenHex(themeColor, 0.55) :
+                          "#cbd5e1";
+                        return (
+                          <div key={d} className="flex-1 relative">
+                            <div title={`${d}일 · ${s.toLocaleString()}보`} className="w-full rounded-t" style={{ height: h, background: bg }} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="text-[11px] text-slate-400 text-center">일자별 걸음수</div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -481,6 +627,8 @@ function BlockCell({
         <ExcludeIcon size={22} />
       ) : achieved ? (
         <PawIcon size={isDouble ? 26 : 22} />
+      ) : isPartial ? (
+        null
       ) : (
         n
       )}
@@ -613,4 +761,5 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+
 

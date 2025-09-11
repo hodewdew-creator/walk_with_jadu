@@ -55,7 +55,8 @@ export default function WalkTrackerApp() {
 // 외부 JSON에서 로드 + 안전한 폴백
 
 
-  const [msgIndex, setMsgIndex] = useState(();=> Math.floor(Math.random()*Math.max(1, messages.length)))=> Math.floor(Math.random()*Math.max(1, messages.length)));
+  const [msgIndex, setMsgIndex] = useState(() => Math.floor(Math.random() * Math.max(1, messages.length)));
+=> Math.floor(Math.random()*Math.max(1, messages.length)))=> Math.floor(Math.random()*Math.max(1, messages.length)));
   const msgTimer = useRef(null);
   useEffect(() => {
     if (!autoRotateMsg) return;
@@ -665,3 +666,4 @@ function LegendOneLine({ themeColor }){
     </div>
   );
 }
+

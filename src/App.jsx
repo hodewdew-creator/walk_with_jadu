@@ -171,7 +171,7 @@ return (
   <button
     className="text-2xl leading-none"  // 👉 기본보다 2배 크기
     title="쿠팡 광고 페이지"
-    onClick={() => {
+    onClick={(https://walk-with-jadu-coup.vercel.app/) => {
       // TODO: 나중에 실제 주소로 교체
       window.location.href = "https://";
     }}

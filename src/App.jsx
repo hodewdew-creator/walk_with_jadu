@@ -165,19 +165,34 @@ return (
       className="max-w-sm mx-auto p-5 flex flex-col items-center relative"
       style={{ paddingBottom: (footerH + 10) + "px" }}
     >
-{/* 🅲 쿠팡 버튼 + 🎨 팔레트 버튼 */}
+{/* 쿠팡 버튼 + 🎨 팔레트 버튼 */}
 <div className="absolute top-3 right-3 flex items-center gap-3">
   {/* 🅲 쿠팡 페이지 버튼 */}
   <button
-    className="text-2xl leading-none"  // 👉 기본보다 2배 크기
+    className="text-2xl leading-none"   // ← 2x1 오타 → 2xl
     title="쿠팡 광고 페이지"
-    onClick={(https://walk-with-jadu-coup.vercel.app/) => {
-      // TODO: 나중에 실제 주소로 교체
-      window.location.href = "https://";
+    onClick={() => {
+      // 공개용: 새 탭 열기 (광고 rel 권장)
+      window.open("https://walk-with-jadu-coup.vercel.app/", "_blank", "noopener,noreferrer");
+      // 또는 같은 탭 이동 원하면 ↓ 한 줄만 남기기
+      // window.location.href = "https://walk-with-jadu-coup.vercel.app/";
     }}
   >
     🅲
   </button>
+
+  {/* 🎨 팔레트 버튼 */}
+  <label className="cursor-pointer" title="테마 색 변경">
+    🎨
+    <input
+      type="color"
+      value={themeColor}
+      onChange={(e) => setThemeColor(e.target.value)}
+      className="opacity-0 w-0 h-0"
+    />
+  </label>
+</div>
+
 
   {/* 🎨 테마 색 변경 */}
   <label className="cursor-pointer" title="테마 색 변경">

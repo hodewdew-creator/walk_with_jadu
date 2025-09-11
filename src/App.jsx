@@ -632,7 +632,7 @@ function DogFallbackIcon({ size = 64 }) {
       <circle cx="24" cy="28" r="6" fill="#fff"/>
       <circle cx="40" cy="28" r="6" fill="#fff"/>
       <circle cx="24" cy="28" r="3" fill="#111"/>
-      <circle cx="40" cy="28 r="3" fill="#111"/>
+      <circle cx="40" cy="28" r="3" fill="#111"/>
       <path d="M24 44 q8 6 16 0" stroke="#111" strokeWidth="3" fill="none" strokeLinecap="round"/>
       <path d="M14 18 q6 -10 14 -2" stroke="#d97706" strokeWidth="6" strokeLinecap="round"/>
       <path d="M50 18 q-6 -10 -14 -2" stroke="#d97706" strokeWidth="6" strokeLinecap="round"/>
